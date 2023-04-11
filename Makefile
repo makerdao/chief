@@ -1,2 +1,2 @@
-all:;  dapp --use solc:0.5.12 build
-test:; dapp --use solc:0.5.12 test --verbose
+all:;  forge build --use solc:0.8.16
+test:; forge test --use solc:0.8.16 -vvv

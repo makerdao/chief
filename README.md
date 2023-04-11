@@ -1,11 +1,9 @@
-# ds-chief
+# DssChief
 
 
 ## Summary
 
 This contract provides a way to elect a "chief" contract via approval voting.
-This may be combined with another contract, such as `DSAuthority`, to elect a
-ruleset for a smart contract system.
 
 Voters lock up voting tokens to give their votes weight. The voting mechanism is
 [approval voting](https://en.wikipedia.org/wiki/Approval_voting). Users get IOU
@@ -17,14 +15,14 @@ has actually locked funds in the contract, and only up to the amount they have l
 
 Though anthropocentric language is used throughout this document when referring
 to the "chief," you should keep in mind that addresses can represent contracts
-as well as people. Thus, `ds-chief` works just as well as a method for selecting
+as well as people. Thus, `dss-chief` works just as well as a method for selecting
 code for execution as it does for realizing political processes. For example,
-`ds-chief` could conceivably be used as a multisignature contract with
+`dss-chief` could conceivably be used as a multisignature contract with
 token-weighted voting governing another set of smart contracts using `ds-auth`
 with `ds-roles`. In this scenario, "candidates" would consist of contracts
 mutating the state of the smart contract set under governance. Such a contract
 being elected "chief" would be granted all permissions to execute whatever
-changes necessary. `ds-chief` could also be used within such a contract
+changes necessary. `dss-chief` could also be used within such a contract
 set in conjunction with a proxy contract like `ds-proxy` or a name resolution
 system like ENS for the purpose of voting in new versions of contracts.
 
@@ -32,9 +30,9 @@ system like ENS for the purpose of voting in new versions of contracts.
 ## Why an IOU Token?
 
 The IOU token allows for chaining governance contracts. An arbitrary number of
-`DSChief`, `DSPrism`, or other contracts of that kind may essentially use the
-same governance token by accepting the IOU token of the `DSChief` contract
-before it as a governance token. E.g., given three `DSChief` contracts,
+`DssChief`, `DSPrism`, or other contracts of that kind may essentially use the
+same governance token by accepting the IOU token of the `DssChief` contract
+before it as a governance token. E.g., given three `DssChief` contracts,
 `chiefA`, `chiefB`, and `chiefC`, with `chiefA.GOV` being the `MKR` token,
 setting `chiefB.GOV` to `chiefA.IOU` and `chiefC.GOV` to `chiefB.IOU` allows all
 three contracts to essentially run using a common pool of `MKR`.
@@ -50,12 +48,12 @@ first withdraw support from the candidate being replaced. Without this, moving
 approval to a new candidate could result in a less-approved candidate moving
 momentarily into the set of elected candidates.
 
-In the case of `ds-chief`, `n` is 1.
+In the case of `dss-chief`, `n` is 1.
 
-In addition, `ds-chief` weights votes according to the quantity of a voting
-token they've chosen to lock up in the `DSChief` or `DSChiefApprovals` contract.
+In addition, `dss-chief` weights votes according to the quantity of a voting
+token they've chosen to lock up in the `DssChief` contract.
 
-It's important to note that the voting token used in a `ds-chief` deployment
+It's important to note that the voting token used in a `dss-chief` deployment
 must be specified at the time of deployment and cannot be changed afterward.
 
 
@@ -72,40 +70,56 @@ candidate on their slate multiple times.
 
 ## APIs
 
-There are two contracts in `ds-chief`: `DSChiefApprovals` and `DSChief`, which
-inherits from `DSChiefApprovals`.
+`DssChief` provides the following public properties:
 
-`DSChiefApprovals` provides the following public properties:
-
-- `slates`: A mapping of `bytes32` to `address` arrays. Represents sets of
-  candidates. Weighted votes are given to slates.
-- `votes`: A mapping of voter addresses to the slate they have voted for.
-- `approvals`: A mapping of candidate addresses to their `uint` weight.
-- `deposits`: A mapping of voter addresses to `uint` number of tokens locked.
-- `GOV`: `DSToken` used for voting.
-- `IOU`: `DSToken` issued in exchange for locking `GOV` tokens.
+- `live`: Indicates if the system is already active or not (1 == active, 0 == inactive).
 - `hat`: Contains the address of the current "chief."
-- `MAX_YAYS`: Maximum number of candidates a slate can hold.
+- `slates`: A mapping of `bytes32` to `address` arrays. Represents sets of candidates. Weighted votes are given to slates.
+- `votes`: A mapping of voter addresses to the slate they have voted for.
+- `approvals`: A mapping of candidate addresses to their `uint256` weight.
+- `deposits`: A mapping of voter addresses to `uint256` number of tokens locked.
+- `last`: A mapping of voter address to `uint256` representing the last block when `lock` was called.
+- `gov`: `Token` used for voting.
+- `iou`: `Token` issued in exchange for locking `gov` tokens.
+- `maxYays`: Maximum number of candidates a slate can hold.
+- `launchThreshold`: Initial amount to lock in `address(0)` for activating the `chief`.
 
-Most of the functions are decorated with the the `note` modifier from [ds-note](https://dapp.tools/dappsys/ds-note.html), meaning that they fire a standardized event when called. Additionally, one custom event is also provided:
+The following events are triggered:
 
-- `Etch(bytes32 indexed slate)`: Fired when a slate is created.
+- `Launch()`: Fired when the `chief` is activated.
+- `Lock(uint256 wad)`: Fired when someone deposits `gov` tokens.
+- `Free(uint256 wad)`:  Fired when someone withdraws `gov` tokens.
+- `Etch(bytes32 indexed slate, address[] yays)`: Fired when a slate is created.
+- `Vote(bytes32 indexed slate)`: Fired when a slated is voted.
+- `Lift(address indexed whom)`: Fired when a new `hat` is elected.
 
 Its public functions are as follows:
 
-### `DSChiefApprovals(DSToken GOV_, DSToken IOU_, uint MAX_YAYS_)`
 
-The constructor.  Sets `GOV`, `IOU`, and `MAX_YAYS`.
+### `DssChief(DSToken gov_, DSToken iou_, uint maxYays_, launchThreshold_)`
+
+The constructor.  Sets `gov`, `iou`, `maxYays` and `launchThreshold`.
 
 
-### `lock(uint wad)`
+### `canCall(address caller, address, bytes4) external view returns (bool ok)`
+
+It is the function that will be used by other contracts to verify if caller can execute an action.
+In this case, it will return true if the system is active and caller equals to `hat`.
+
+
+### `launch()`
+
+Launches the system when the conditions are met (`approvals` on `address(0)` are >= `launchThreshold`).
+
+
+### `lock(uint256 wad)`
 
 Charges the user `wad` `GOV` tokens, issues an equal amount of `IOU` tokens to
 the user, and adds `wad` weight to the candidates on the user's selected slate.
 Fires a `LogLockFree` event.
 
 
-### `free(uint wad)`
+### `free(uint256 wad)`
 
 Charges the user `wad` `IOU` tokens, issues an equal amount of `GOV` tokens to
 the user, and subtracts `wad` weight from the candidates on the user's selected
@@ -133,37 +147,3 @@ slate.
 
 Checks the given address and promotes it to `chief` if it has more weight than
 the current chief.
-
-
-`DSChief` is a combination of `DSRoles` from the `ds-roles` package and
-`DSChiefApprovals`. It can be used in conjunction with `ds-auth` to govern smart
-contract systems.
-
-Its public functions are as follows:
-
-
-### `DSChief(DSToken GOV_, DSToken IOU_, uint MAX_YAYS_)`
-
-The constructor.  Sets `GOV`, `IOU`, and `MAX_YAYS`.
-
-### `setOwner(address owner_)`
-
-Reverts the transaction. Overridden from `DSAuth`.
-
-### `setAuthority(DSAuthority authority_)`
-
-Reverts the transaction. Overridden from `DSAuth`.
-
-
-### `isUserRoot(address who) constant returns (bool)`
-
-Returns `true` if the given address is the chief.
-
-
-### `setRootUser(address who, bool enabled)`
-
-Reverts the transaction. Overridden from `DSRoles`.
-
-### DSRoles
-
-See [ds-roles](https://dapp.tools/dappsys/ds-roles.html) for inherited features.
