@@ -42,6 +42,8 @@ contract DssChief is DSAuthority {
     mapping(address => uint256)   public deposits;
     mapping(address => uint256)   public last;
 
+    bytes32 EMPTY_SLATE = keccak256(abi.encodePacked(new address[](0)));
+
     GemLike immutable public gov;
     GemLike immutable public iou;
     uint256 immutable public maxYays;
@@ -125,8 +127,7 @@ contract DssChief is DSAuthority {
     }
 
     function vote(bytes32 slate) public {
-        require(slates[slate].length > 0 ||
-            slate == 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470, "DssChief/invalid-slate");
+        require(slates[slate].length > 0 || slate == EMPTY_SLATE, "DssChief/invalid-slate");
         uint256 weight = deposits[msg.sender];
         _subWeight(weight, votes[msg.sender]);
         votes[msg.sender] = slate;
