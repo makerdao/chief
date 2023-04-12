@@ -65,15 +65,17 @@ contract DssChief is DSAuthority {
 
     function _addWeight(uint256 weight, bytes32 slate) internal {
         address[] storage yays = slates[slate];
-        for (uint256 i = 0; i < yays.length; i++) {
+        for (uint256 i = 0; i < yays.length; ) {
             approvals[yays[i]] = approvals[yays[i]] + weight;
+            unchecked { i++; } // bounded by max array length
         }
     }
 
     function _subWeight(uint256 weight, bytes32 slate) internal {
         address[] storage yays = slates[slate];
-        for (uint256 i = 0; i < yays.length; i++) {
+        for (uint256 i = 0; i < yays.length; ) {
             approvals[yays[i]] = approvals[yays[i]] - weight;
+            unchecked { i++; } // bounded by max array length
         }
     }
 
@@ -110,9 +112,10 @@ contract DssChief is DSAuthority {
     function etch(address[] memory yays) public returns (bytes32 slate) {
         require(yays.length <= maxYays, "DssChief/greater-max-yays");
         if (yays.length > 1 ) {
-            for (uint256 i = 0; i < yays.length - 1; i++) {
+            for (uint256 i = 0; i < yays.length - 1; ) {
                 // strict inequality ensures both ordering and uniqueness
                 require(uint160(yays[i]) < uint160(yays[i+1]), "DssChief/yays-not-ordered");
+                unchecked { i++; } // bounded by max array length
             }
         }
 
