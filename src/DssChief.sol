@@ -134,7 +134,7 @@ contract DssChief is DSAuthority {
         uint256 weight = deposits[msg.sender];
         _subWeight(weight, votes[msg.sender]);
         votes[msg.sender] = slate;
-        _addWeight(weight, votes[msg.sender]);
+        _addWeight(weight, slate);
         emit Vote(slate);
     }
 
