@@ -6,10 +6,7 @@
 This contract provides a way to elect a "chief" contract via approval voting.
 
 Voters lock up voting tokens to give their votes weight. The voting mechanism is
-[approval voting](https://en.wikipedia.org/wiki/Approval_voting). Users get IOU
-tokens any time they lock voting tokens, which is useful for secondary governance mechanisms.
-The IOU tokens may not be exchanged for the locked tokens except by someone who
-has actually locked funds in the contract, and only up to the amount they have locked.
+[approval voting](https://en.wikipedia.org/wiki/Approval_voting).
 
 ## Note on Chiefs
 
@@ -25,18 +22,6 @@ being elected "chief" would be granted all permissions to execute whatever
 changes necessary. `dss-chief` could also be used within such a contract
 set in conjunction with a proxy contract like `ds-proxy` or a name resolution
 system like ENS for the purpose of voting in new versions of contracts.
-
-
-## Why an IOU Token?
-
-The IOU token allows for chaining governance contracts. An arbitrary number of
-`DssChief`, `DSPrism`, or other contracts of that kind may essentially use the
-same governance token by accepting the IOU token of the `DssChief` contract
-before it as a governance token. E.g., given three `DssChief` contracts,
-`chiefA`, `chiefB`, and `chiefC`, with `chiefA.GOV` being the `MKR` token,
-setting `chiefB.GOV` to `chiefA.IOU` and `chiefC.GOV` to `chiefB.IOU` allows all
-three contracts to essentially run using a common pool of `MKR`.
-
 
 ## Approval Voting
 
@@ -80,7 +65,6 @@ candidate on their slate multiple times.
 - `deposits`: A mapping of voter addresses to `uint256` number of tokens locked.
 - `last`: A mapping of voter address to `uint256` representing the last block when `lock` was called.
 - `gov`: `Token` used for voting.
-- `iou`: `Token` issued in exchange for locking `gov` tokens.
 - `maxYays`: Maximum number of candidates a slate can hold.
 - `launchThreshold`: Initial amount to lock in `address(0)` for activating the `chief`.
 
@@ -96,9 +80,9 @@ The following events are triggered:
 Its public functions are as follows:
 
 
-### `DssChief(DSToken gov_, DSToken iou_, uint maxYays_, launchThreshold_)`
+### `DssChief(DSToken gov_, uint maxYays_, launchThreshold_)`
 
-The constructor.  Sets `gov`, `iou`, `maxYays` and `launchThreshold`.
+The constructor.  Sets `gov`, `maxYays` and `launchThreshold`.
 
 
 ### `canCall(address caller, address, bytes4) external view returns (bool ok)`
@@ -114,16 +98,14 @@ Launches the system when the conditions are met (`approvals` on `address(0)` are
 
 ### `lock(uint256 wad)`
 
-Charges the user `wad` `GOV` tokens, issues an equal amount of `IOU` tokens to
-the user, and adds `wad` weight to the candidates on the user's selected slate.
+Charges the user `wad` `GOV` tokens and adds `wad` weight to the candidates on the user's selected slate.
 Fires a `LogLockFree` event.
 
 
 ### `free(uint256 wad)`
 
-Charges the user `wad` `IOU` tokens, issues an equal amount of `GOV` tokens to
-the user, and subtracts `wad` weight from the candidates on the user's selected
-slate. Fires a `LogLockFree` event.
+Returns `wad` amount of `GOV` tokens to the user and subtracts `wad` weight from the candidates on the user's selected slate.
+Fires a `LogLockFree` event.
 
 
 ### `etch(address[] yays) returns (bytes32 slate)`

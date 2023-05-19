@@ -124,7 +124,6 @@ contract DssChiefTest is Test {
 
     DssChief chief;
     TokenMock gov;
-    TokenMock iou;
 
     // u prefix: user
     address uLarge;
@@ -133,10 +132,9 @@ contract DssChiefTest is Test {
 
     function setUp() public {
         gov = new TokenMock();
-        iou = new TokenMock();
         gov.mint(address(this), initialBalance);
 
-        chief = new DssChief(address(gov), address(iou), electionSize, 80_000 ether);
+        chief = new DssChief(address(gov), electionSize, 80_000 ether);
 
         uLarge = address(123);
         uMedium = address(456);
@@ -269,7 +267,6 @@ contract DssChiefTest is Test {
     function testFreeAfterLock() public {
         uint uLargeLockedAmt = uLargeInitialBalance / 2;
         vm.startPrank(uLarge);
-        iou.approve(address(chief), uLargeLockedAmt);
         gov.approve(address(chief), uLargeLockedAmt);
         chief.lock(uLargeLockedAmt);
         vm.roll(2);
@@ -279,7 +276,6 @@ contract DssChiefTest is Test {
     function testFreeAfterLockSameBlock() public {
         uint uLargeLockedAmt = uLargeInitialBalance / 2;
         vm.startPrank(uLarge);
-        iou.approve(address(chief), uLargeLockedAmt);
         gov.approve(address(chief), uLargeLockedAmt);
         chief.lock(uLargeLockedAmt);
         vm.expectRevert("DssChief/cant-free-same-block");
@@ -289,7 +285,6 @@ contract DssChiefTest is Test {
     function testChangingWeightAfterVoting() public {
         uint uLargeLockedAmt = uLargeInitialBalance / 2;
         vm.startPrank(uLarge);
-        iou.approve(address(chief), uLargeLockedAmt);
         gov.approve(address(chief), uLargeLockedAmt);
         chief.lock(uLargeLockedAmt);
 
@@ -370,7 +365,6 @@ contract DssChiefTest is Test {
 
         vm.stopPrank();
         vm.startPrank(uMedium);
-        iou.approve(address(chief), uMediumInitialBalance);
         vm.roll(2);
         chief.free(uMediumInitialBalance);
 

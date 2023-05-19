@@ -27,8 +27,6 @@ interface DSAuthority {
 }
 
 interface GemLike {
-    function burn(address, uint256) external;
-    function mint(address, uint256) external;
     function transfer(address, uint256) external returns (bool);
     function transferFrom(address, address, uint256) external returns (bool);
 }
@@ -45,7 +43,6 @@ contract DssChief is DSAuthority {
     bytes32 EMPTY_SLATE = keccak256(abi.encodePacked(new address[](0)));
 
     GemLike immutable public gov;
-    GemLike immutable public iou;
     uint256 immutable public maxYays;
     uint256 immutable public launchThreshold;
 
@@ -56,9 +53,8 @@ contract DssChief is DSAuthority {
     event Vote(bytes32 indexed slate);
     event Lift(address indexed whom);
 
-    constructor(address gov_, address iou_, uint256 maxYays_, uint256 launchThreshold_) {
+    constructor(address gov_, uint256 maxYays_, uint256 launchThreshold_) {
         gov = GemLike(gov_);
-        iou = GemLike(iou_);
         maxYays = maxYays_;
         launchThreshold = launchThreshold_;
     }
@@ -94,7 +90,6 @@ contract DssChief is DSAuthority {
     function lock(uint256 wad) external {
         last[msg.sender] = block.number;
         gov.transferFrom(msg.sender, address(this), wad);
-        iou.mint(msg.sender, wad);
         deposits[msg.sender] = deposits[msg.sender] + wad;
         _addWeight(wad, votes[msg.sender]);
         emit Lock(wad);
@@ -104,7 +99,6 @@ contract DssChief is DSAuthority {
         require(block.number > last[msg.sender], "DssChief/cant-free-same-block");
         deposits[msg.sender] = deposits[msg.sender] - wad;
         _subWeight(wad, votes[msg.sender]);
-        iou.burn(msg.sender, wad);
         gov.transfer(msg.sender, wad);
         emit Free(wad);
     }
@@ -158,8 +152,8 @@ contract DssChief is DSAuthority {
         return address(gov);
     }
 
-    function IOU() external view returns (address) {
-        return address(iou);
+    function IOU() external pure returns (address) {
+        return address(0);
     }
 
     function MAX_YAYS() external view returns (uint256) {
