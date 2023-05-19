@@ -105,8 +105,8 @@ contract DssChief is DSAuthority {
 
     function etch(address[] memory yays) public returns (bytes32 slate) {
         require(yays.length <= maxYays, "DssChief/greater-max-yays");
-        if (yays.length > 1 ) {
-            for (uint256 i = 0; i < yays.length - 1; ) {
+        if (yays.length > 1) {
+            for (uint256 i = 0; i < yays.length - 1;) {
                 // strict inequality ensures both ordering and uniqueness
                 require(uint160(yays[i]) < uint160(yays[i+1]), "DssChief/yays-not-ordered");
                 unchecked { ++i; } // bounded by max array length
