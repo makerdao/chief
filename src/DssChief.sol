@@ -40,7 +40,7 @@ contract DssChief is DSAuthority {
     mapping(address => uint256)   public deposits;
     mapping(address => uint256)   public last;
 
-    bytes32 EMPTY_SLATE = keccak256(abi.encodePacked(new address[](0)));
+    bytes32 constant EMPTY_SLATE = keccak256(abi.encodePacked(new address[](0)));
 
     GemLike immutable public gov;
     uint256 immutable public maxYays;
