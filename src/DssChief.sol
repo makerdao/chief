@@ -63,7 +63,7 @@ contract DssChief is DSAuthority {
         address[] storage yays = slates[slate];
         for (uint256 i = 0; i < yays.length; ) {
             approvals[yays[i]] = approvals[yays[i]] + weight;
-            unchecked { i++; } // bounded by max array length
+            unchecked { ++i; } // bounded by max array length
         }
     }
 
@@ -71,7 +71,7 @@ contract DssChief is DSAuthority {
         address[] storage yays = slates[slate];
         for (uint256 i = 0; i < yays.length; ) {
             approvals[yays[i]] = approvals[yays[i]] - weight;
-            unchecked { i++; } // bounded by max array length
+            unchecked { ++i; } // bounded by max array length
         }
     }
 
@@ -109,7 +109,7 @@ contract DssChief is DSAuthority {
             for (uint256 i = 0; i < yays.length - 1; ) {
                 // strict inequality ensures both ordering and uniqueness
                 require(uint160(yays[i]) < uint160(yays[i+1]), "DssChief/yays-not-ordered");
-                unchecked { i++; } // bounded by max array length
+                unchecked { ++i; } // bounded by max array length
             }
         }
 
