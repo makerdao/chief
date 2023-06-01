@@ -18,91 +18,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity >=0.4.23;
+pragma solidity ^0.8.16;
 
 import "forge-std/test.sol";
 
 import "./DssChief.sol";
-
-contract TokenMock {
-    uint256 public totalSupply;
-
-    mapping (address => uint256)                      public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-    mapping (address => uint256)                      public nonces;
-
-    // --- ERC20 Mutations ---
-    function transfer(address to, uint256 value) external returns (bool) {
-        require(to != address(0) && to != address(this), "TokenMock/invalid-address");
-        uint256 balance = balanceOf[msg.sender];
-        require(balance >= value, "TokenMock/insufficient-balance");
-
-        unchecked {
-            balanceOf[msg.sender] = balance - value;
-            balanceOf[to] += value;
-        }
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint256 value) external returns (bool) {
-        require(to != address(0) && to != address(this), "TokenMock/invalid-address");
-        uint256 balance = balanceOf[from];
-        require(balance >= value, "TokenMock/insufficient-balance");
-
-        if (from != msg.sender) {
-            uint256 allowed = allowance[from][msg.sender];
-            if (allowed != type(uint256).max) {
-                require(allowed >= value, "TokenMock/insufficient-allowance");
-
-                unchecked {
-                    allowance[from][msg.sender] = allowed - value;
-                }
-            }
-        }
-
-        unchecked {
-            balanceOf[from] = balance - value;
-            balanceOf[to] += value;
-        }
-
-        return true;
-    }
-
-    function approve(address spender, uint256 value) external returns (bool) {
-        allowance[msg.sender][spender] = value;
-
-        return true;
-    }
-
-    function mint(address to, uint256 value) external {
-        require(to != address(0) && to != address(this), "TokenMock/invalid-address");
-        unchecked {
-            balanceOf[to] = balanceOf[to] + value; // note: we don't need an overflow check here b/c balanceOf[to] <= totalSupply and there is an overflow check below
-        }
-        totalSupply = totalSupply + value;
-    }
-
-    function burn(address from, uint256 value) external {
-        uint256 balance = balanceOf[from];
-        require(balance >= value, "TokenMock/insufficient-balance");
-
-        if (from != msg.sender) {
-            uint256 allowed = allowance[from][msg.sender];
-            if (allowed != type(uint256).max) {
-                require(allowed >= value, "TokenMock/insufficient-allowance");
-
-                unchecked {
-                    allowance[from][msg.sender] = allowed - value;
-                }
-            }
-        }
-
-        unchecked {
-            balanceOf[from] = balance - value; // note: we don't need overflow checks b/c require(balance >= value) and balance <= totalSupply
-            totalSupply     = totalSupply - value;
-        }
-    }
-}
+import "./mocks/TokenMock.sol";
 
 contract DssChiefTest is Test {
     uint256 constant electionSize = 3;
