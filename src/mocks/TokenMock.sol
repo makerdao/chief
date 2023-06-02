@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// DssChief.t.sol - tests for DssChief.sol
+// TokenMock.sol
 
-// Copyright (C) 2017 DappHub, LLC
 // Copyright (C) 2023 Dai Foundation
 
 // This program is free software: you can redistribute it and/or modify
