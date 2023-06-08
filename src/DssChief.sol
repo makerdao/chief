@@ -75,6 +75,10 @@ contract DssChief is DSAuthority {
         }
     }
 
+    function length(bytes32 slate) external view returns (uint256) {
+        return slates[slate].length;
+    }
+
     function canCall(address caller, address, bytes4) external view returns (bool ok) {
         ok = live == 1 && caller == hat;
     }
@@ -103,7 +107,7 @@ contract DssChief is DSAuthority {
         emit Free(wad);
     }
 
-    function etch(address[] memory yays) public returns (bytes32 slate) {
+    function etch(address[] calldata yays) public returns (bytes32 slate) {
         require(yays.length <= maxYays, "DssChief/greater-max-yays");
         if (yays.length > 1) {
             for (uint256 i = 0; i < yays.length - 1;) {
@@ -118,7 +122,7 @@ contract DssChief is DSAuthority {
         emit Etch(slate, yays);
     }
 
-    function vote(address[] memory yays) external returns (bytes32 slate) {
+    function vote(address[] calldata yays) external returns (bytes32 slate) {
         slate = etch(yays);
         vote(slate);
     }
