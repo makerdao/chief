@@ -34,8 +34,8 @@ contract TokenMock {
 
         unchecked {
             balanceOf[msg.sender] = balance - value;
-            balanceOf[to] += value;
         }
+        balanceOf[to] += value;
         return true;
     }
 
@@ -55,10 +55,8 @@ contract TokenMock {
             }
         }
 
-        unchecked {
-            balanceOf[from] = balance - value;
-            balanceOf[to] += value;
-        }
+        balanceOf[from] = balance - value;
+        balanceOf[to] += value;
 
         return true;
     }
@@ -71,9 +69,7 @@ contract TokenMock {
 
     function mint(address to, uint256 value) external {
         require(to != address(0) && to != address(this), "TokenMock/invalid-address");
-        unchecked {
-            balanceOf[to] = balanceOf[to] + value; // note: we don't need an overflow check here b/c balanceOf[to] <= totalSupply and there is an overflow check below
-        }
+        balanceOf[to] = balanceOf[to] + value;
         totalSupply = totalSupply + value;
     }
 }

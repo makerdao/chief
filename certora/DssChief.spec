@@ -83,6 +83,8 @@ rule launch_revert() {
 rule lock(uint256 wad) {
     env e;
 
+    require e.msg.sender != currentContract;
+
     mathint maxYays = maxYays();
     require maxYays == 5;
 
@@ -92,6 +94,9 @@ rule lock(uint256 wad) {
 
     address otherAddr;
     require otherAddr != e.msg.sender;
+
+    address otherAddr2;
+    require otherAddr2 != e.msg.sender && otherAddr2 != currentContract;
 
     mathint liveBefore = live();
     address hatBefore = hat();
@@ -125,6 +130,9 @@ rule lock(uint256 wad) {
     mathint depositsSenderBefore = deposits(e.msg.sender);
     mathint depositsOtherBefore = deposits(otherAddr);
     mathint lastOtherBefore = last(otherAddr);
+    mathint govBalanceOfSenderBefore = gov.balanceOf(e.msg.sender);
+    mathint govBalanceOfChiefBefore = gov.balanceOf(currentContract);
+    mathint govBalanceOfOtherBefore = gov.balanceOf(otherAddr2);
 
     lock(e, wad);
 
@@ -142,6 +150,9 @@ rule lock(uint256 wad) {
     mathint depositsOtherAfter = deposits(otherAddr);
     mathint lastSenderAfter = last(e.msg.sender);
     mathint lastOtherAfter = last(otherAddr);
+    mathint govBalanceOfSenderAfter = gov.balanceOf(e.msg.sender);
+    mathint govBalanceOfChiefAfter = gov.balanceOf(currentContract);
+    mathint govBalanceOfOtherAfter = gov.balanceOf(otherAddr2);
 
     assert liveAfter == liveBefore, "lock did not keep unchanged live";
     assert hatAfter == hatBefore, "lock did not keep unchanged hat";
@@ -157,6 +168,9 @@ rule lock(uint256 wad) {
     assert depositsOtherAfter == depositsOtherBefore, "lock did not keep unchanged the rest of deposits[x]";
     assert lastSenderAfter == to_mathint(e.block.number), "lock did not set last[sender] to block.number";
     assert lastOtherAfter == lastOtherBefore, "lock did not keep unchanged the rest of last[x]";
+    assert govBalanceOfSenderAfter == govBalanceOfSenderBefore - wad, "lock did not decrease gov.balanceOf[sender] by wad";
+    assert govBalanceOfChiefAfter == govBalanceOfChiefBefore + wad, "lock did not increase gov.balanceOf[chief] by wad";
+    assert govBalanceOfOtherAfter == govBalanceOfOtherBefore, "lock did not keep unchanged the rest of gov.balanceOf[x]";
 }
 
 // Verify revert rules on lock
@@ -214,6 +228,8 @@ rule lock_revert(uint256 wad) {
 rule free(uint256 wad) {
     env e;
 
+    require e.msg.sender != currentContract;
+
     mathint maxYays = maxYays();
     require maxYays == 5;
 
@@ -223,6 +239,9 @@ rule free(uint256 wad) {
 
     address otherAddr;
     require otherAddr != e.msg.sender;
+
+    address otherAddr2;
+    require otherAddr2 != e.msg.sender && otherAddr2 != currentContract;
 
     mathint liveBefore = live();
     address hatBefore = hat();
@@ -256,6 +275,9 @@ rule free(uint256 wad) {
     mathint depositsSenderBefore = deposits(e.msg.sender);
     mathint depositsOtherBefore = deposits(otherAddr);
     mathint lastBefore = last(anyAddr);
+    mathint govBalanceOfSenderBefore = gov.balanceOf(e.msg.sender);
+    mathint govBalanceOfChiefBefore = gov.balanceOf(currentContract);
+    mathint govBalanceOfOtherBefore = gov.balanceOf(otherAddr2);
 
     free(e, wad);
 
@@ -272,6 +294,9 @@ rule free(uint256 wad) {
     mathint depositsSenderAfter = deposits(e.msg.sender);
     mathint depositsOtherAfter = deposits(otherAddr);
     mathint lastAfter = last(anyAddr);
+    mathint govBalanceOfSenderAfter = gov.balanceOf(e.msg.sender);
+    mathint govBalanceOfChiefAfter = gov.balanceOf(currentContract);
+    mathint govBalanceOfOtherAfter = gov.balanceOf(otherAddr2);
 
     assert liveAfter == liveBefore, "free did not keep unchanged live";
     assert hatAfter == hatBefore, "free did not keep unchanged hat";
@@ -286,6 +311,9 @@ rule free(uint256 wad) {
     assert depositsSenderAfter == depositsSenderBefore - wad, "free did not decrease deposits[sender] by wad";
     assert depositsOtherAfter == depositsOtherBefore, "free did not keep unchanged the rest of deposits[x]";
     assert lastAfter == lastBefore, "free did not keep unchanged last[x]";
+    assert govBalanceOfSenderAfter == govBalanceOfSenderBefore + wad, "free did not increase gov.balanceOf[sender] by wad";
+    assert govBalanceOfChiefAfter == govBalanceOfChiefBefore - wad, "free did not decrease gov.balanceOf[chief] by wad";
+    assert govBalanceOfOtherAfter == govBalanceOfOtherBefore, "free did not keep unchanged the rest of gov.balanceOf[x]";
 }
 
 // Verify revert rules on free
