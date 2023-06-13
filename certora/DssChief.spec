@@ -83,7 +83,8 @@ rule launch_revert() {
 rule lock(uint256 wad) {
     env e;
 
-    require maxYays() == 5;
+    mathint maxYays = maxYays();
+    require maxYays == 5;
 
     bytes32 anyB32;
     uint256 anyUint;
@@ -97,8 +98,8 @@ rule lock(uint256 wad) {
     address slatesBefore = slates(anyB32, anyUint);
     bytes32 votesBefore = votes(anyAddr);
     bytes32 votesSender = votes(e.msg.sender);
-    uint256 lengthVotesSender = length(votesSender);
-    require lengthVotesSender <= maxYays();
+    mathint lengthVotesSender = length(votesSender);
+    require lengthVotesSender <= maxYays;
     address addr0 = 0;
     address slatesVotesSender0 = lengthVotesSender >= 1 ? slates(votesSender, 0) : addr0; // Just any address as placeholder
     address slatesVotesSender1 = lengthVotesSender >= 2 ? slates(votesSender, 1) : addr0;
@@ -162,14 +163,15 @@ rule lock(uint256 wad) {
 rule lock_revert(uint256 wad) {
     env e;
 
-    require maxYays() == 5;
+    mathint maxYays = maxYays();
+    require maxYays == 5;
     require gov.balanceOf(e.msg.sender) >= wad;
     require gov.allowance(e.msg.sender, currentContract) >= wad;
 
     mathint depositsSender = deposits(e.msg.sender);
     bytes32 votesSender = votes(e.msg.sender);
-    uint256 lengthVotesSender = length(votesSender);
-    require lengthVotesSender <= maxYays();
+    mathint lengthVotesSender = length(votesSender);
+    require lengthVotesSender <= maxYays;
     address addr0 = 0;
     address slatesVotesSender0 = lengthVotesSender >= 1 ? slates(votesSender, 0) : addr0; // Just any address as placeholder
     address slatesVotesSender1 = lengthVotesSender >= 2 ? slates(votesSender, 1) : addr0;
@@ -212,7 +214,8 @@ rule lock_revert(uint256 wad) {
 rule free(uint256 wad) {
     env e;
 
-    require maxYays() == 5;
+    mathint maxYays = maxYays();
+    require maxYays == 5;
 
     bytes32 anyB32;
     uint256 anyUint;
@@ -226,8 +229,8 @@ rule free(uint256 wad) {
     address slatesBefore = slates(anyB32, anyUint);
     bytes32 votesBefore = votes(anyAddr);
     bytes32 votesSender = votes(e.msg.sender);
-    uint256 lengthVotesSender = length(votesSender);
-    require lengthVotesSender <= maxYays();
+    mathint lengthVotesSender = length(votesSender);
+    require lengthVotesSender <= maxYays;
     address addr0 = 0;
     address slatesVotesSender0 = lengthVotesSender >= 1 ? slates(votesSender, 0) : addr0; // Just any address as placeholder
     address slatesVotesSender1 = lengthVotesSender >= 2 ? slates(votesSender, 1) : addr0;
@@ -289,7 +292,8 @@ rule free(uint256 wad) {
 rule free_revert(uint256 wad) {
     env e;
 
-    require maxYays() == 5;
+    mathint maxYays = maxYays();
+    require maxYays == 5;
     require gov.balanceOf(currentContract) >= wad;
     require gov.balanceOf(e.msg.sender) + wad < max_uint256;
     address addr0 = 0;
@@ -298,8 +302,8 @@ rule free_revert(uint256 wad) {
     mathint lastSender = last(e.msg.sender);
     mathint depositsSender = deposits(e.msg.sender);
     bytes32 votesSender = votes(e.msg.sender);
-    uint256 lengthVotesSender = length(votesSender);
-    require lengthVotesSender <= maxYays();
+    mathint lengthVotesSender = length(votesSender);
+    require lengthVotesSender <= maxYays;
     address slatesVotesSender0 = lengthVotesSender >= 1 ? slates(votesSender, 0) : addr0; // Just any address as placeholder
     address slatesVotesSender1 = lengthVotesSender >= 2 ? slates(votesSender, 1) : addr0;
     address slatesVotesSender2 = lengthVotesSender >= 3 ? slates(votesSender, 2) : addr0;
@@ -343,15 +347,17 @@ rule free_revert(uint256 wad) {
 rule etch(address[] yays) {
     env e;
 
-    require maxYays() == 5;
+    mathint maxYays = maxYays();
+    require maxYays == 5;
 
     uint256 anyUint;
     address anyAddr;
 
-    bytes32 slateYays = yays.length <= 5 ? aux.hashYays(yays) : to_bytes32(0); // To avoid an error on something that won't be used
+    mathint yaysLength = yays.length;
+    bytes32 slateYays = yaysLength <= maxYays ? aux.hashYays(yays) : to_bytes32(0); // To avoid an error on something that won't be used
     bytes32 otherB32;
     require otherB32 != slateYays;
-    require length(slateYays) <= 5; // Not possible to have an existing array larger than maxYays, but still needed for the prover
+    require to_mathint(length(slateYays)) <= maxYays; // Not possible to have an existing array larger than maxYays, but still needed for the prover
 
     mathint liveBefore = live();
     address hatBefore = hat();
@@ -380,7 +386,7 @@ rule etch(address[] yays) {
 
     assert liveAfter == liveBefore, "etch did not keep unchanged live";
     assert hatAfter == hatBefore, "etch did not keep unchanged hat";
-    assert slatesSlateYaysLength == to_mathint(yays.length), "etch did not set slates[slateYays].length as yays.length";
+    assert slatesSlateYaysLength == yaysLength, "etch did not set slates[slateYays].length as yays.length";
     assert yays.length >= 1 => slatesSlateYays0 == yays[0], "etch did not set slates[slateYays][0] as yays[0]";
     assert yays.length >= 2 => slatesSlateYays1 == yays[1], "etch did not set slates[slateYays][1] as yays[1]";
     assert yays.length >= 3 => slatesSlateYays2 == yays[2], "etch did not set slates[slateYays][2] as yays[2]";
@@ -400,8 +406,8 @@ rule etch_revert(address[] yays) {
     mathint maxYays = maxYays();
     require maxYays == 5;
 
-    bytes32 slateYays = yays.length <= 5 ? aux.hashYays(yays) : to_bytes32(0); // To avoid an error on something that won't be used
-    require length(slateYays) <= 5; // Not possible to have an existing array larger than maxYays, but still needed for the prover
+    bytes32 slateYays = to_mathint(yays.length) <= maxYays ? aux.hashYays(yays) : to_bytes32(0); // To avoid an error on something that won't be used
+    require to_mathint(length(slateYays)) <= maxYays; // Not possible to have an existing array larger than maxYays, but still needed for the prover
 
     mathint yaysLength = yays.length;
 
@@ -425,10 +431,256 @@ rule etch_revert(address[] yays) {
 }
 
 // Verify correct storage changes for non reverting vote
+rule vote_yays(address[] yays) {
+    env e;
+
+    mathint maxYays = maxYays();
+    require maxYays == 5;
+
+    bytes32 anyB32;
+    uint256 anyUint;
+    address anyAddr;
+
+    mathint yaysLength = to_mathint(yays.length);
+    bytes32 slateYays = yaysLength <= maxYays ? aux.hashYays(yays) : to_bytes32(0); // To avoid an error on something that won't be used
+    bytes32 otherB32;
+    require otherB32 != slateYays;
+    require to_mathint(length(slateYays)) <= maxYays; // Not possible to have an existing array larger than maxYays, but still needed for the prover
+
+    address otherAddr;
+    require otherAddr != e.msg.sender;
+
+    mathint liveBefore = live();
+    address hatBefore = hat();
+    address slatesOtherAnyBefore = slates(otherB32, anyUint);
+    bytes32 votesSenderBefore = votes(e.msg.sender);
+    bytes32 votesOtherBefore = votes(otherAddr);
+    mathint lengthVotesSender = length(votesSenderBefore);
+    require lengthVotesSender <= maxYays;
+    address addr0 = 0;
+    address slatesVotesSender0 = lengthVotesSender >= 1 ? slates(votesSenderBefore, 0) : addr0; // Just any address as placeholder
+    address slatesVotesSender1 = lengthVotesSender >= 2 ? slates(votesSenderBefore, 1) : addr0;
+    address slatesVotesSender2 = lengthVotesSender >= 3 ? slates(votesSenderBefore, 2) : addr0;
+    address slatesVotesSender3 = lengthVotesSender >= 4 ? slates(votesSenderBefore, 3) : addr0;
+    address slatesVotesSender4 = lengthVotesSender == 5 ? slates(votesSenderBefore, 4) : addr0;
+
+    // This is to avoid that the hash of the new voting array can collide with the hash of the prev existing voted (if not the same content)
+    require lengthVotesSender != yaysLength => votesSenderBefore != slateYays;
+    require lengthVotesSender == yaysLength && yays.length == 1 &&
+            slatesVotesSender0 != yays[0]
+            =>  votesSenderBefore != slateYays;
+    require lengthVotesSender == yaysLength && yays.length == 2 &&
+            (slatesVotesSender0 != yays[0] ||
+             slatesVotesSender1 != yays[1])
+            =>  votesSenderBefore != slateYays;
+    require lengthVotesSender == yaysLength && yays.length == 3 &&
+            (slatesVotesSender0 != yays[0] ||
+             slatesVotesSender1 != yays[1] ||
+             slatesVotesSender2 != yays[2])
+            =>  votesSenderBefore != slateYays;
+    require lengthVotesSender == yaysLength && yays.length == 4 &&
+            (slatesVotesSender0 != yays[0] ||
+             slatesVotesSender1 != yays[1] ||
+             slatesVotesSender2 != yays[2] ||
+             slatesVotesSender3 != yays[3])
+            =>  votesSenderBefore != slateYays;
+    require lengthVotesSender == yaysLength && yays.length == 5 &&
+            (slatesVotesSender0 != yays[0] ||
+             slatesVotesSender1 != yays[1] ||
+             slatesVotesSender2 != yays[2] ||
+             slatesVotesSender3 != yays[3] ||
+             slatesVotesSender4 != yays[4])
+            =>  votesSenderBefore != slateYays;
+    //
+
+    require lengthVotesSender <= 1 || slatesVotesSender1 > slatesVotesSender0;
+    require lengthVotesSender <= 2 || slatesVotesSender2 > slatesVotesSender1;
+    require lengthVotesSender <= 3 || slatesVotesSender3 > slatesVotesSender2;
+    require lengthVotesSender <= 4 || slatesVotesSender4 > slatesVotesSender3;
+    require yays.length <= 1 || yays[1] > yays[0];
+    require yays.length <= 2 || yays[2] > yays[1];
+    require yays.length <= 3 || yays[3] > yays[2];
+    require yays.length <= 4 || yays[4] > yays[3];
+    address slatesOtherAny;
+    require (lengthVotesSender < 1 || slatesOtherAny != slatesVotesSender0) &&
+            (lengthVotesSender < 2 || slatesOtherAny != slatesVotesSender1) &&
+            (lengthVotesSender < 3 || slatesOtherAny != slatesVotesSender2) &&
+            (lengthVotesSender < 4 || slatesOtherAny != slatesVotesSender3) &&
+            (lengthVotesSender < 5 || slatesOtherAny != slatesVotesSender4);
+    require (yays.length < 1 || slatesOtherAny != yays[0]) &&
+            (yays.length < 2 || slatesOtherAny != yays[1]) &&
+            (yays.length < 3 || slatesOtherAny != yays[2]) &&
+            (yays.length < 4 || slatesOtherAny != yays[3]) &&
+            (yays.length < 5 || slatesOtherAny != yays[4]);
+    mathint approvalsSlatesVotesSender0Before = approvals(slatesVotesSender0);
+    mathint approvalsSlatesVotesSender1Before = approvals(slatesVotesSender1);
+    mathint approvalsSlatesVotesSender2Before = approvals(slatesVotesSender2);
+    mathint approvalsSlatesVotesSender3Before = approvals(slatesVotesSender3);
+    mathint approvalsSlatesVotesSender4Before = approvals(slatesVotesSender4);
+    mathint approvalsYays0Before = approvals(yays[0]);
+    mathint approvalsYays1Before = approvals(yays[1]);
+    mathint approvalsYays2Before = approvals(yays[2]);
+    mathint approvalsYays3Before = approvals(yays[3]);
+    mathint approvalsYays4Before = approvals(yays[4]);
+    mathint approvalsYaysNotSenderBefore = approvals(slatesOtherAny);
+    mathint depositsSender = deposits(e.msg.sender);
+    mathint depositsBefore = deposits(anyAddr);
+    mathint lastBefore = last(anyAddr);
+
+    vote(e, yays);
+
+    mathint liveAfter = live();
+    address hatAfter = hat();
+    mathint lengthSlateYays = length(slateYays);
+    address slatesSlateYays0 = yays.length >= 1 ? slates(slateYays, 0) : addr0; // Just any addr as it doesn't save it
+    address slatesSlateYays1 = yays.length >= 2 ? slates(slateYays, 1) : addr0;
+    address slatesSlateYays2 = yays.length >= 3 ? slates(slateYays, 2) : addr0;
+    address slatesSlateYays3 = yays.length >= 4 ? slates(slateYays, 3) : addr0;
+    address slatesSlateYays4 = yays.length == 5 ? slates(slateYays, 4) : addr0;
+    address slatesOtherAnyAfter = slates(otherB32, anyUint);
+    bytes32 votesSenderAfter = votes(e.msg.sender);
+    bytes32 votesOtherAfter = votes(otherAddr);
+    mathint approvalsSlatesVotesSender0After = approvals(slatesVotesSender0);
+    mathint approvalsSlatesVotesSender1After = approvals(slatesVotesSender1);
+    mathint approvalsSlatesVotesSender2After = approvals(slatesVotesSender2);
+    mathint approvalsSlatesVotesSender3After = approvals(slatesVotesSender3);
+    mathint approvalsSlatesVotesSender4After = approvals(slatesVotesSender4);
+    mathint approvalsYays0After = approvals(yays[0]);
+    mathint approvalsYays1After = approvals(yays[1]);
+    mathint approvalsYays2After = approvals(yays[2]);
+    mathint approvalsYays3After = approvals(yays[3]);
+    mathint approvalsYays4After = approvals(yays[4]);
+    mathint approvalsYaysNotSenderAfter = approvals(slatesOtherAny);
+    mathint depositsAfter = deposits(anyAddr);
+    mathint lastAfter = last(anyAddr);
+
+    assert liveAfter == liveBefore, "vote did not keep unchanged live";
+    assert hatAfter == hatBefore, "vote did not keep unchanged hat";
+    assert lengthSlateYays == yaysLength, "vote did not set slates[slateYays].length as yays.length";
+    assert yays.length >= 1 => slatesSlateYays0 == yays[0], "vote did not set slates[slateYays][0] as yays[0]";
+    assert yays.length >= 2 => slatesSlateYays1 == yays[1], "vote did not set slates[slateYays][1] as yays[1]";
+    assert yays.length >= 3 => slatesSlateYays2 == yays[2], "vote did not set slates[slateYays][2] as yays[2]";
+    assert yays.length >= 4 => slatesSlateYays3 == yays[3], "vote did not set slates[slateYays][3] as yays[3]";
+    assert yays.length == 5 => slatesSlateYays4 == yays[4], "vote did not set slates[slateYays][4] as yays[4]";
+    assert slatesOtherAnyAfter == slatesOtherAnyBefore, "vote did not keep unchanged the rest of slates[x][y]";
+    assert votesSenderAfter == slateYays, "vote did not set votes[sender] to slate";
+    assert votesOtherAfter == votesOtherBefore, "vote did not keep unchanged the rest of votes[x]";
+    assert lengthVotesSender >= 1 &&
+           slatesVotesSender0 != yays[0] &&
+           slatesVotesSender0 != yays[1] &&
+           slatesVotesSender0 != yays[2] &&
+           slatesVotesSender0 != yays[3] &&
+           slatesVotesSender0 != yays[4]
+           => approvalsSlatesVotesSender0After == approvalsSlatesVotesSender0Before - depositsSender, "vote did not decrease approvals[slatesVotesSender0] by depositsSender";
+    assert lengthVotesSender >= 1 &&
+           (yays.length >= 1 && slatesVotesSender0 == yays[0] ||
+            yays.length >= 2 && slatesVotesSender0 == yays[1] ||
+            yays.length >= 3 && slatesVotesSender0 == yays[2] ||
+            yays.length >= 4 && slatesVotesSender0 == yays[3] ||
+            yays.length == 5 && slatesVotesSender0 == yays[4])
+           => approvalsSlatesVotesSender0After == approvalsSlatesVotesSender0Before, "vote did not keep unchanged approvals[slatesVotesSender0]";
+    assert lengthVotesSender >= 2 &&
+           slatesVotesSender1 != yays[0] &&
+           slatesVotesSender1 != yays[1] &&
+           slatesVotesSender1 != yays[2] &&
+           slatesVotesSender1 != yays[3] &&
+           slatesVotesSender1 != yays[4]
+           => approvalsSlatesVotesSender1After == approvalsSlatesVotesSender1Before - depositsSender, "vote did not decrease approvals[slatesVotesSender1] by depositsSender";
+    assert lengthVotesSender >= 2 &&
+           (yays.length >= 1 && slatesVotesSender1 == yays[0] ||
+            yays.length >= 2 && slatesVotesSender1 == yays[1] ||
+            yays.length >= 3 && slatesVotesSender1 == yays[2] ||
+            yays.length >= 4 && slatesVotesSender1 == yays[3] ||
+            yays.length == 5 && slatesVotesSender1 == yays[4])
+           => approvalsSlatesVotesSender1After == approvalsSlatesVotesSender1Before, "vote did not keep unchanged approvals[slatesVotesSender1]";
+    assert lengthVotesSender >= 3 &&
+           slatesVotesSender2 != yays[0] &&
+           slatesVotesSender2 != yays[1] &&
+           slatesVotesSender2 != yays[2] &&
+           slatesVotesSender2 != yays[3] &&
+           slatesVotesSender2 != yays[4]
+           => approvalsSlatesVotesSender2After == approvalsSlatesVotesSender2Before - depositsSender, "vote did not decrease approvals[slatesVotesSender2] by depositsSender";
+    assert lengthVotesSender >= 3 &&
+           (yays.length >= 1 && slatesVotesSender2 == yays[0] ||
+            yays.length >= 2 && slatesVotesSender2 == yays[1] ||
+            yays.length >= 3 && slatesVotesSender2 == yays[2] ||
+            yays.length >= 4 && slatesVotesSender2 == yays[3] ||
+            yays.length == 5 && slatesVotesSender2 == yays[4])
+           => approvalsSlatesVotesSender2After == approvalsSlatesVotesSender2Before, "vote did not keep unchanged approvals[slatesVotesSender2]";
+    assert lengthVotesSender >= 4 &&
+           slatesVotesSender3 != yays[0] &&
+           slatesVotesSender3 != yays[1] &&
+           slatesVotesSender3 != yays[2] &&
+           slatesVotesSender3 != yays[3] &&
+           slatesVotesSender3 != yays[4]
+           => approvalsSlatesVotesSender3After == approvalsSlatesVotesSender3Before - depositsSender, "vote did not decrease approvals[slatesVotesSender3] by depositsSender";
+    assert lengthVotesSender >= 4 &&
+           (yays.length >= 1 && slatesVotesSender3 == yays[0] ||
+            yays.length >= 2 && slatesVotesSender3 == yays[1] ||
+            yays.length >= 3 && slatesVotesSender3 == yays[2] ||
+            yays.length >= 4 && slatesVotesSender3 == yays[3] ||
+            yays.length == 5 && slatesVotesSender3 == yays[4])
+           => approvalsSlatesVotesSender3After == approvalsSlatesVotesSender3Before, "vote did not keep unchanged approvals[slatesVotesSender3]";
+    assert lengthVotesSender == 5 &&
+           slatesVotesSender4 != yays[0] &&
+           slatesVotesSender4 != yays[1] &&
+           slatesVotesSender4 != yays[2] &&
+           slatesVotesSender4 != yays[3] &&
+           slatesVotesSender4 != yays[4]
+           => approvalsSlatesVotesSender4After == approvalsSlatesVotesSender4Before - depositsSender, "vote did not decrease approvals[slatesVotesSender4] by depositsSender";
+    assert lengthVotesSender == 5 &&
+           (yays.length >= 1 && slatesVotesSender4 == yays[0] ||
+            yays.length >= 2 && slatesVotesSender4 == yays[1] ||
+            yays.length >= 3 && slatesVotesSender4 == yays[2] ||
+            yays.length >= 4 && slatesVotesSender4 == yays[3] ||
+            yays.length == 5 && slatesVotesSender4 == yays[4])
+           => approvalsSlatesVotesSender4After == approvalsSlatesVotesSender4Before, "vote did not keep unchanged approvals[slatesVotesSender4]";
+    assert yays.length >= 1 &&
+           yays[0] != slatesVotesSender0 &&
+           yays[0] != slatesVotesSender1 &&
+           yays[0] != slatesVotesSender2 &&
+           yays[0] != slatesVotesSender3 &&
+           yays[0] != slatesVotesSender4
+           => approvalsYays0After == approvalsYays0Before + depositsSender, "vote did not increase approvals[yays0] by depositsSender";
+    assert yays.length >= 2 &&
+           yays[1] != slatesVotesSender0 &&
+           yays[1] != slatesVotesSender1 &&
+           yays[1] != slatesVotesSender2 &&
+           yays[1] != slatesVotesSender3 &&
+           yays[1] != slatesVotesSender4
+           => approvalsYays1After == approvalsYays1Before + depositsSender, "vote did not increase approvals[yays1] by depositsSender";
+    assert yays.length >= 3 &&
+           yays[2] != slatesVotesSender0 &&
+           yays[2] != slatesVotesSender1 &&
+           yays[2] != slatesVotesSender2 &&
+           yays[2] != slatesVotesSender3 &&
+           yays[2] != slatesVotesSender4
+           => approvalsYays2After == approvalsYays2Before + depositsSender, "vote did not increase approvals[yays2] by depositsSender";
+    assert yays.length >= 4 &&
+           yays[3] != slatesVotesSender0 &&
+           yays[3] != slatesVotesSender1 &&
+           yays[3] != slatesVotesSender2 &&
+           yays[3] != slatesVotesSender3 &&
+           yays[3] != slatesVotesSender4
+           => approvalsYays3After == approvalsYays3Before + depositsSender, "vote did not increase approvals[yays3] by depositsSender";
+    assert yays.length == 5 &&
+           yays[4] != slatesVotesSender0 &&
+           yays[4] != slatesVotesSender1 &&
+           yays[4] != slatesVotesSender2 &&
+           yays[4] != slatesVotesSender3 &&
+           yays[4] != slatesVotesSender4
+           => approvalsYays4After == approvalsYays4Before + depositsSender, "vote did not increase approvals[yays4] by depositsSender";
+    assert approvalsYaysNotSenderAfter == approvalsYaysNotSenderBefore, "vote did not keep unchanged the rest of approvals[x]";
+    assert depositsAfter == depositsBefore, "vote did not keep unchanged every deposits[x]";
+    assert lastAfter == lastBefore, "vote did not keep unchanged every last[x]";
+}
+
+// Verify correct storage changes for non reverting vote
 rule vote_slate(bytes32 slate) {
     env e;
 
-    require maxYays() == 5;
+    mathint maxYays = maxYays();
+    require maxYays == 5;
 
     bytes32 anyB32;
     uint256 anyUint;
@@ -442,8 +694,8 @@ rule vote_slate(bytes32 slate) {
     address slatesBefore = slates(anyB32, anyUint);
     bytes32 votesOtherBefore = votes(otherAddr);
     bytes32 votesSenderBefore = votes(e.msg.sender);
-    uint256 lengthVotesSender = length(votesSenderBefore);
-    require lengthVotesSender <= maxYays();
+    mathint lengthVotesSender = length(votesSenderBefore);
+    require lengthVotesSender <= maxYays;
     address addr0 = 0;
     address slatesVotesSender0 = lengthVotesSender >= 1 ? slates(votesSenderBefore, 0) : addr0; // Just any address as placeholder
     address slatesVotesSender1 = lengthVotesSender >= 2 ? slates(votesSenderBefore, 1) : addr0;
@@ -454,8 +706,8 @@ rule vote_slate(bytes32 slate) {
     require lengthVotesSender <= 2 || slatesVotesSender2 > slatesVotesSender1;
     require lengthVotesSender <= 3 || slatesVotesSender3 > slatesVotesSender2;
     require lengthVotesSender <= 4 || slatesVotesSender4 > slatesVotesSender3;
-    uint256 lengthSlate = length(slate);
-    require lengthSlate <= maxYays();
+    mathint lengthSlate = length(slate);
+    require lengthSlate <= maxYays;
     address slatesSlate0 = lengthSlate >= 1 ? slates(slate, 0) : addr0; // Just any address as placeholder
     address slatesSlate1 = lengthSlate >= 2 ? slates(slate, 1) : addr0;
     address slatesSlate2 = lengthSlate >= 3 ? slates(slate, 2) : addr0;
@@ -635,8 +887,8 @@ rule vote_slate_revert(bytes32 slate) {
     require maxYays == 5;
 
     bytes32 votesSender = votes(e.msg.sender);
-    uint256 lengthVotesSender = length(votesSender);
-    require lengthVotesSender <= maxYays();
+    mathint lengthVotesSender = length(votesSender);
+    require lengthVotesSender <= maxYays;
     address addr0 = 0;
     address slatesVotesSender0 = lengthVotesSender >= 1 ? slates(votesSender, 0) : addr0; // Just any address as placeholder
     address slatesVotesSender1 = lengthVotesSender >= 2 ? slates(votesSender, 1) : addr0;
@@ -678,11 +930,11 @@ rule vote_slate_revert(bytes32 slate) {
 
     bool revert1  = e.msg.value > 0;
     bool revert2  = lengthSlate == 0 && slate != emptySlate; // to_bytes32(0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470);
-    bool revert3  = lengthVotesSender >= 1 && approvalsSlatesVotesSender0 < to_mathint(depositsSender);
-    bool revert4  = lengthVotesSender >= 2 && approvalsSlatesVotesSender1 < to_mathint(depositsSender);
-    bool revert5  = lengthVotesSender >= 3 && approvalsSlatesVotesSender2 < to_mathint(depositsSender);
-    bool revert6  = lengthVotesSender >= 4 && approvalsSlatesVotesSender3 < to_mathint(depositsSender);
-    bool revert7  = lengthVotesSender == 5 && approvalsSlatesVotesSender4 < to_mathint(depositsSender);
+    bool revert3  = lengthVotesSender >= 1 && approvalsSlatesVotesSender0 < depositsSender;
+    bool revert4  = lengthVotesSender >= 2 && approvalsSlatesVotesSender1 < depositsSender;
+    bool revert5  = lengthVotesSender >= 3 && approvalsSlatesVotesSender2 < depositsSender;
+    bool revert6  = lengthVotesSender >= 4 && approvalsSlatesVotesSender3 < depositsSender;
+    bool revert7  = lengthVotesSender == 5 && approvalsSlatesVotesSender4 < depositsSender;
     bool revert8  = lengthSlate >= 1 &&
                     (lengthVotesSender < 1 || slatesSlate0 != slatesVotesSender0) &&
                     (lengthVotesSender < 2 || slatesSlate0 != slatesVotesSender1) &&
