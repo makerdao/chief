@@ -20,9 +20,9 @@
 
 pragma solidity ^0.8.16;
 
-import "forge-std/test.sol";
+import "forge-std/Test.sol";
 
-import "./DssChief.sol";
+import "../src/DssChief.sol";
 import "./mocks/TokenMock.sol";
 
 contract DssChiefTest is Test {

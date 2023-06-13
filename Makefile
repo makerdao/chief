@@ -1,3 +1,1 @@
-all             :;  forge build --use solc:0.8.16
-test            :; forge test --use solc:0.8.16 -vvv
 certora-chief   :; PATH=~/.solc-select/artifacts/solc-0.8.16:~/.solc-select/artifacts:${PATH} certoraRun --solc_map DssChief=solc-0.8.16,TokenMock=solc-0.8.16,Auxiliar=solc-0.8.16 --optimize_map DssChief=200,TokenMock=0,Auxiliar=0 --rule_sanity basic src/DssChief.sol src/mocks/TokenMock.sol certora/Auxiliar.sol --link DssChief:gov=TokenMock --verify DssChief:certora/DssChief.spec --loop_iter 5 --settings -mediumTimeout=1200,-solver=z3,-adaptiveSolverConfig=false,-smt_nonLinearArithmetic=true$(if $(short), --short_output,)$(if $(rule), --rule $(rule),)$(if $(multi), --multi_assert_check,)
