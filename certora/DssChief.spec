@@ -181,6 +181,7 @@ rule lock_revert(uint256 wad) {
     require maxYays == 5;
     require gov.balanceOf(e.msg.sender) >= wad;
     require gov.allowance(e.msg.sender, currentContract) >= wad;
+    require gov.balanceOf(currentContract) + wad <= max_uint256;
 
     mathint depositsSender = deposits(e.msg.sender);
     bytes32 votesSender = votes(e.msg.sender);
@@ -401,11 +402,11 @@ rule etch(address[] yays) {
     address hatAfter = hat();
     address addr0 = 0;
     mathint slatesSlateYaysLength = length(slateYays);
-    address slatesSlateYays0 = yays.length >= 1 ? slates(slateYays, 0) : addr0; // Just any addr as it doesn't save it
-    address slatesSlateYays1 = yays.length >= 2 ? slates(slateYays, 1) : addr0;
-    address slatesSlateYays2 = yays.length >= 3 ? slates(slateYays, 2) : addr0;
-    address slatesSlateYays3 = yays.length >= 4 ? slates(slateYays, 3) : addr0;
-    address slatesSlateYays4 = yays.length == 5 ? slates(slateYays, 4) : addr0;
+    address slatesSlateYays0 = yaysLength >= 1 ? slates(slateYays, 0) : addr0; // Just any addr as it doesn't save it
+    address slatesSlateYays1 = yaysLength >= 2 ? slates(slateYays, 1) : addr0;
+    address slatesSlateYays2 = yaysLength >= 3 ? slates(slateYays, 2) : addr0;
+    address slatesSlateYays3 = yaysLength >= 4 ? slates(slateYays, 3) : addr0;
+    address slatesSlateYays4 = yaysLength == 5 ? slates(slateYays, 4) : addr0;
     address slatesOtherAnyAfter = slates(otherB32, anyUint);
     bytes32 votesAfter = votes(anyAddr);
     mathint approvalsAfter = approvals(anyAddr);
@@ -415,11 +416,11 @@ rule etch(address[] yays) {
     assert liveAfter == liveBefore, "etch did not keep unchanged live";
     assert hatAfter == hatBefore, "etch did not keep unchanged hat";
     assert slatesSlateYaysLength == yaysLength, "etch did not set slates[slateYays].length as yays.length";
-    assert yays.length >= 1 => slatesSlateYays0 == yays[0], "etch did not set slates[slateYays][0] as yays[0]";
-    assert yays.length >= 2 => slatesSlateYays1 == yays[1], "etch did not set slates[slateYays][1] as yays[1]";
-    assert yays.length >= 3 => slatesSlateYays2 == yays[2], "etch did not set slates[slateYays][2] as yays[2]";
-    assert yays.length >= 4 => slatesSlateYays3 == yays[3], "etch did not set slates[slateYays][3] as yays[3]";
-    assert yays.length == 5 => slatesSlateYays4 == yays[4], "etch did not set slates[slateYays][4] as yays[4]";
+    assert yaysLength >= 1 => slatesSlateYays0 == yays[0], "etch did not set slates[slateYays][0] as yays[0]";
+    assert yaysLength >= 2 => slatesSlateYays1 == yays[1], "etch did not set slates[slateYays][1] as yays[1]";
+    assert yaysLength >= 3 => slatesSlateYays2 == yays[2], "etch did not set slates[slateYays][2] as yays[2]";
+    assert yaysLength >= 4 => slatesSlateYays3 == yays[3], "etch did not set slates[slateYays][3] as yays[3]";
+    assert yaysLength == 5 => slatesSlateYays4 == yays[4], "etch did not set slates[slateYays][4] as yays[4]";
     assert slatesOtherAnyAfter == slatesOtherAnyBefore, "etch did not keep unchanged the rest of slates[x][y]";
     assert votesAfter == votesBefore, "etch did not keep unchanged every votes[x]";
     assert approvalsAfter == approvalsBefore, "etch did not keep unchanged every approvals[x]";
@@ -434,10 +435,9 @@ rule etch_revert(address[] yays) {
     mathint maxYays = maxYays();
     require maxYays == 5;
 
-    bytes32 slateYays = to_mathint(yays.length) <= maxYays ? aux.hashYays(yays) : to_bytes32(0); // To avoid an error on something that won't be used
-    require to_mathint(length(slateYays)) <= maxYays; // Not possible to have an existing array larger than maxYays, but still needed for the prover
-
     mathint yaysLength = yays.length;
+    bytes32 slateYays = yaysLength <= maxYays ? aux.hashYays(yays) : to_bytes32(0); // To avoid an error on something that won't be used
+    require to_mathint(length(slateYays)) <= maxYays; // Not possible to have an existing array larger than maxYays, but still needed for the prover
 
     etch@withrevert(e, yays);
 
@@ -494,30 +494,20 @@ rule vote_yays(address[] yays) {
 
     // This is to avoid that the hash of the new voting array can collide with the hash of the prev existing voted (if not the same content)
     require lengthVotesSender != yaysLength => votesSenderBefore != slateYays;
-    require lengthVotesSender == yaysLength && yays.length == 1 &&
+    require lengthVotesSender == yaysLength && yaysLength >= 1 &&
             slatesVotesSender0 != yays[0]
             => votesSenderBefore != slateYays;
-    require lengthVotesSender == yaysLength && yays.length == 2 &&
-            (slatesVotesSender0 != yays[0] ||
-             slatesVotesSender1 != yays[1])
+    require lengthVotesSender == yaysLength && yaysLength >= 2 &&
+            slatesVotesSender1 != yays[1]
             => votesSenderBefore != slateYays;
-    require lengthVotesSender == yaysLength && yays.length == 3 &&
-            (slatesVotesSender0 != yays[0] ||
-             slatesVotesSender1 != yays[1] ||
-             slatesVotesSender2 != yays[2])
+    require lengthVotesSender == yaysLength && yaysLength >= 3 &&
+            slatesVotesSender2 != yays[2]
             => votesSenderBefore != slateYays;
-    require lengthVotesSender == yaysLength && yays.length == 4 &&
-            (slatesVotesSender0 != yays[0] ||
-             slatesVotesSender1 != yays[1] ||
-             slatesVotesSender2 != yays[2] ||
-             slatesVotesSender3 != yays[3])
+    require lengthVotesSender == yaysLength && yaysLength >= 4 &&
+            slatesVotesSender3 != yays[3]
             => votesSenderBefore != slateYays;
-    require lengthVotesSender == yaysLength && yays.length == 5 &&
-            (slatesVotesSender0 != yays[0] ||
-             slatesVotesSender1 != yays[1] ||
-             slatesVotesSender2 != yays[2] ||
-             slatesVotesSender3 != yays[3] ||
-             slatesVotesSender4 != yays[4])
+    require lengthVotesSender == yaysLength && yaysLength == 5 &&
+            slatesVotesSender4 != yays[4]
             => votesSenderBefore != slateYays;
     //
 
@@ -525,21 +515,21 @@ rule vote_yays(address[] yays) {
     require lengthVotesSender <= 2 || slatesVotesSender2 > slatesVotesSender1;
     require lengthVotesSender <= 3 || slatesVotesSender3 > slatesVotesSender2;
     require lengthVotesSender <= 4 || slatesVotesSender4 > slatesVotesSender3;
-    require yays.length <= 1 || yays[1] > yays[0];
-    require yays.length <= 2 || yays[2] > yays[1];
-    require yays.length <= 3 || yays[3] > yays[2];
-    require yays.length <= 4 || yays[4] > yays[3];
+    require yaysLength <= 1 || yays[1] > yays[0];
+    require yaysLength <= 2 || yays[2] > yays[1];
+    require yaysLength <= 3 || yays[3] > yays[2];
+    require yaysLength <= 4 || yays[4] > yays[3];
     address slatesOtherAny;
     require (lengthVotesSender < 1 || slatesOtherAny != slatesVotesSender0) &&
             (lengthVotesSender < 2 || slatesOtherAny != slatesVotesSender1) &&
             (lengthVotesSender < 3 || slatesOtherAny != slatesVotesSender2) &&
             (lengthVotesSender < 4 || slatesOtherAny != slatesVotesSender3) &&
             (lengthVotesSender < 5 || slatesOtherAny != slatesVotesSender4);
-    require (yays.length < 1 || slatesOtherAny != yays[0]) &&
-            (yays.length < 2 || slatesOtherAny != yays[1]) &&
-            (yays.length < 3 || slatesOtherAny != yays[2]) &&
-            (yays.length < 4 || slatesOtherAny != yays[3]) &&
-            (yays.length < 5 || slatesOtherAny != yays[4]);
+    require (yaysLength < 1 || slatesOtherAny != yays[0]) &&
+            (yaysLength < 2 || slatesOtherAny != yays[1]) &&
+            (yaysLength < 3 || slatesOtherAny != yays[2]) &&
+            (yaysLength < 4 || slatesOtherAny != yays[3]) &&
+            (yaysLength < 5 || slatesOtherAny != yays[4]);
     mathint approvalsSlatesVotesSender0Before = approvals(slatesVotesSender0);
     mathint approvalsSlatesVotesSender1Before = approvals(slatesVotesSender1);
     mathint approvalsSlatesVotesSender2Before = approvals(slatesVotesSender2);
@@ -560,11 +550,11 @@ rule vote_yays(address[] yays) {
     mathint liveAfter = live();
     address hatAfter = hat();
     mathint lengthSlateYays = length(slateYays);
-    address slatesSlateYays0 = yays.length >= 1 ? slates(slateYays, 0) : addr0; // Just any addr as it doesn't save it
-    address slatesSlateYays1 = yays.length >= 2 ? slates(slateYays, 1) : addr0;
-    address slatesSlateYays2 = yays.length >= 3 ? slates(slateYays, 2) : addr0;
-    address slatesSlateYays3 = yays.length >= 4 ? slates(slateYays, 3) : addr0;
-    address slatesSlateYays4 = yays.length == 5 ? slates(slateYays, 4) : addr0;
+    address slatesSlateYays0 = yaysLength >= 1 ? slates(slateYays, 0) : addr0; // Just any addr as it doesn't save it
+    address slatesSlateYays1 = yaysLength >= 2 ? slates(slateYays, 1) : addr0;
+    address slatesSlateYays2 = yaysLength >= 3 ? slates(slateYays, 2) : addr0;
+    address slatesSlateYays3 = yaysLength >= 4 ? slates(slateYays, 3) : addr0;
+    address slatesSlateYays4 = yaysLength == 5 ? slates(slateYays, 4) : addr0;
     address slatesOtherAnyAfter = slates(otherB32, anyUint);
     bytes32 votesSenderAfter = votes(e.msg.sender);
     bytes32 votesOtherAfter = votes(otherAddr);
@@ -584,119 +574,119 @@ rule vote_yays(address[] yays) {
 
     assert liveAfter == liveBefore, "vote did not keep unchanged live";
     assert hatAfter == hatBefore, "vote did not keep unchanged hat";
-    assert lengthSlateYays == yaysLength, "vote did not set slates[slateYays].length as yays.length";
-    assert yays.length >= 1 => slatesSlateYays0 == yays[0], "vote did not set slates[slateYays][0] as yays[0]";
-    assert yays.length >= 2 => slatesSlateYays1 == yays[1], "vote did not set slates[slateYays][1] as yays[1]";
-    assert yays.length >= 3 => slatesSlateYays2 == yays[2], "vote did not set slates[slateYays][2] as yays[2]";
-    assert yays.length >= 4 => slatesSlateYays3 == yays[3], "vote did not set slates[slateYays][3] as yays[3]";
-    assert yays.length == 5 => slatesSlateYays4 == yays[4], "vote did not set slates[slateYays][4] as yays[4]";
+    assert lengthSlateYays == yaysLength, "vote did not set slates[slateYays].length as yaysLength";
+    assert yaysLength >= 1 => slatesSlateYays0 == yays[0], "vote did not set slates[slateYays][0] as yays[0]";
+    assert yaysLength >= 2 => slatesSlateYays1 == yays[1], "vote did not set slates[slateYays][1] as yays[1]";
+    assert yaysLength >= 3 => slatesSlateYays2 == yays[2], "vote did not set slates[slateYays][2] as yays[2]";
+    assert yaysLength >= 4 => slatesSlateYays3 == yays[3], "vote did not set slates[slateYays][3] as yays[3]";
+    assert yaysLength == 5 => slatesSlateYays4 == yays[4], "vote did not set slates[slateYays][4] as yays[4]";
     assert slatesOtherAnyAfter == slatesOtherAnyBefore, "vote did not keep unchanged the rest of slates[x][y]";
     assert votesSenderAfter == slateYays, "vote did not set votes[sender] to slate";
     assert votesOtherAfter == votesOtherBefore, "vote did not keep unchanged the rest of votes[x]";
     assert lengthVotesSender >= 1 &&
-           slatesVotesSender0 != yays[0] &&
-           slatesVotesSender0 != yays[1] &&
-           slatesVotesSender0 != yays[2] &&
-           slatesVotesSender0 != yays[3] &&
-           slatesVotesSender0 != yays[4]
+           (yaysLength < 1 || slatesVotesSender0 != yays[0]) &&
+           (yaysLength < 2 || slatesVotesSender0 != yays[1]) &&
+           (yaysLength < 3 || slatesVotesSender0 != yays[2]) &&
+           (yaysLength < 4 || slatesVotesSender0 != yays[3]) &&
+           (yaysLength < 5 || slatesVotesSender0 != yays[4])
            => approvalsSlatesVotesSender0After == approvalsSlatesVotesSender0Before - depositsSender, "vote did not decrease approvals[slatesVotesSender0] by depositsSender";
     assert lengthVotesSender >= 1 &&
-           (yays.length >= 1 && slatesVotesSender0 == yays[0] ||
-            yays.length >= 2 && slatesVotesSender0 == yays[1] ||
-            yays.length >= 3 && slatesVotesSender0 == yays[2] ||
-            yays.length >= 4 && slatesVotesSender0 == yays[3] ||
-            yays.length == 5 && slatesVotesSender0 == yays[4])
+           (yaysLength >= 1 && slatesVotesSender0 == yays[0] ||
+            yaysLength >= 2 && slatesVotesSender0 == yays[1] ||
+            yaysLength >= 3 && slatesVotesSender0 == yays[2] ||
+            yaysLength >= 4 && slatesVotesSender0 == yays[3] ||
+            yaysLength == 5 && slatesVotesSender0 == yays[4])
            => approvalsSlatesVotesSender0After == approvalsSlatesVotesSender0Before, "vote did not keep unchanged approvals[slatesVotesSender0]";
     assert lengthVotesSender >= 2 &&
-           slatesVotesSender1 != yays[0] &&
-           slatesVotesSender1 != yays[1] &&
-           slatesVotesSender1 != yays[2] &&
-           slatesVotesSender1 != yays[3] &&
-           slatesVotesSender1 != yays[4]
+           (yaysLength < 1 || slatesVotesSender1 != yays[0]) &&
+           (yaysLength < 2 || slatesVotesSender1 != yays[1]) &&
+           (yaysLength < 3 || slatesVotesSender1 != yays[2]) &&
+           (yaysLength < 4 || slatesVotesSender1 != yays[3]) &&
+           (yaysLength < 5 || slatesVotesSender1 != yays[4])
            => approvalsSlatesVotesSender1After == approvalsSlatesVotesSender1Before - depositsSender, "vote did not decrease approvals[slatesVotesSender1] by depositsSender";
     assert lengthVotesSender >= 2 &&
-           (yays.length >= 1 && slatesVotesSender1 == yays[0] ||
-            yays.length >= 2 && slatesVotesSender1 == yays[1] ||
-            yays.length >= 3 && slatesVotesSender1 == yays[2] ||
-            yays.length >= 4 && slatesVotesSender1 == yays[3] ||
-            yays.length == 5 && slatesVotesSender1 == yays[4])
+           (yaysLength >= 1 && slatesVotesSender1 == yays[0] ||
+            yaysLength >= 2 && slatesVotesSender1 == yays[1] ||
+            yaysLength >= 3 && slatesVotesSender1 == yays[2] ||
+            yaysLength >= 4 && slatesVotesSender1 == yays[3] ||
+            yaysLength == 5 && slatesVotesSender1 == yays[4])
            => approvalsSlatesVotesSender1After == approvalsSlatesVotesSender1Before, "vote did not keep unchanged approvals[slatesVotesSender1]";
     assert lengthVotesSender >= 3 &&
-           slatesVotesSender2 != yays[0] &&
-           slatesVotesSender2 != yays[1] &&
-           slatesVotesSender2 != yays[2] &&
-           slatesVotesSender2 != yays[3] &&
-           slatesVotesSender2 != yays[4]
+           (yaysLength < 1 || slatesVotesSender2 != yays[0]) &&
+           (yaysLength < 2 || slatesVotesSender2 != yays[1]) &&
+           (yaysLength < 3 || slatesVotesSender2 != yays[2]) &&
+           (yaysLength < 4 || slatesVotesSender2 != yays[3]) &&
+           (yaysLength < 5 || slatesVotesSender2 != yays[4])
            => approvalsSlatesVotesSender2After == approvalsSlatesVotesSender2Before - depositsSender, "vote did not decrease approvals[slatesVotesSender2] by depositsSender";
     assert lengthVotesSender >= 3 &&
-           (yays.length >= 1 && slatesVotesSender2 == yays[0] ||
-            yays.length >= 2 && slatesVotesSender2 == yays[1] ||
-            yays.length >= 3 && slatesVotesSender2 == yays[2] ||
-            yays.length >= 4 && slatesVotesSender2 == yays[3] ||
-            yays.length == 5 && slatesVotesSender2 == yays[4])
+           (yaysLength >= 1 && slatesVotesSender2 == yays[0] ||
+            yaysLength >= 2 && slatesVotesSender2 == yays[1] ||
+            yaysLength >= 3 && slatesVotesSender2 == yays[2] ||
+            yaysLength >= 4 && slatesVotesSender2 == yays[3] ||
+            yaysLength == 5 && slatesVotesSender2 == yays[4])
            => approvalsSlatesVotesSender2After == approvalsSlatesVotesSender2Before, "vote did not keep unchanged approvals[slatesVotesSender2]";
     assert lengthVotesSender >= 4 &&
-           slatesVotesSender3 != yays[0] &&
-           slatesVotesSender3 != yays[1] &&
-           slatesVotesSender3 != yays[2] &&
-           slatesVotesSender3 != yays[3] &&
-           slatesVotesSender3 != yays[4]
+           (yaysLength < 1 || slatesVotesSender3 != yays[0]) &&
+           (yaysLength < 2 || slatesVotesSender3 != yays[1]) &&
+           (yaysLength < 3 || slatesVotesSender3 != yays[2]) &&
+           (yaysLength < 4 || slatesVotesSender3 != yays[3]) &&
+           (yaysLength < 5 || slatesVotesSender3 != yays[4])
            => approvalsSlatesVotesSender3After == approvalsSlatesVotesSender3Before - depositsSender, "vote did not decrease approvals[slatesVotesSender3] by depositsSender";
     assert lengthVotesSender >= 4 &&
-           (yays.length >= 1 && slatesVotesSender3 == yays[0] ||
-            yays.length >= 2 && slatesVotesSender3 == yays[1] ||
-            yays.length >= 3 && slatesVotesSender3 == yays[2] ||
-            yays.length >= 4 && slatesVotesSender3 == yays[3] ||
-            yays.length == 5 && slatesVotesSender3 == yays[4])
+           (yaysLength >= 1 && slatesVotesSender3 == yays[0] ||
+            yaysLength >= 2 && slatesVotesSender3 == yays[1] ||
+            yaysLength >= 3 && slatesVotesSender3 == yays[2] ||
+            yaysLength >= 4 && slatesVotesSender3 == yays[3] ||
+            yaysLength == 5 && slatesVotesSender3 == yays[4])
            => approvalsSlatesVotesSender3After == approvalsSlatesVotesSender3Before, "vote did not keep unchanged approvals[slatesVotesSender3]";
     assert lengthVotesSender == 5 &&
-           slatesVotesSender4 != yays[0] &&
-           slatesVotesSender4 != yays[1] &&
-           slatesVotesSender4 != yays[2] &&
-           slatesVotesSender4 != yays[3] &&
-           slatesVotesSender4 != yays[4]
+           (yaysLength < 1 || slatesVotesSender4 != yays[0]) &&
+           (yaysLength < 2 || slatesVotesSender4 != yays[1]) &&
+           (yaysLength < 3 || slatesVotesSender4 != yays[2]) &&
+           (yaysLength < 4 || slatesVotesSender4 != yays[3]) &&
+           (yaysLength < 5 || slatesVotesSender4 != yays[4])
            => approvalsSlatesVotesSender4After == approvalsSlatesVotesSender4Before - depositsSender, "vote did not decrease approvals[slatesVotesSender4] by depositsSender";
     assert lengthVotesSender == 5 &&
-           (yays.length >= 1 && slatesVotesSender4 == yays[0] ||
-            yays.length >= 2 && slatesVotesSender4 == yays[1] ||
-            yays.length >= 3 && slatesVotesSender4 == yays[2] ||
-            yays.length >= 4 && slatesVotesSender4 == yays[3] ||
-            yays.length == 5 && slatesVotesSender4 == yays[4])
+           (yaysLength >= 1 && slatesVotesSender4 == yays[0] ||
+            yaysLength >= 2 && slatesVotesSender4 == yays[1] ||
+            yaysLength >= 3 && slatesVotesSender4 == yays[2] ||
+            yaysLength >= 4 && slatesVotesSender4 == yays[3] ||
+            yaysLength == 5 && slatesVotesSender4 == yays[4])
            => approvalsSlatesVotesSender4After == approvalsSlatesVotesSender4Before, "vote did not keep unchanged approvals[slatesVotesSender4]";
-    assert yays.length >= 1 &&
-           yays[0] != slatesVotesSender0 &&
-           yays[0] != slatesVotesSender1 &&
-           yays[0] != slatesVotesSender2 &&
-           yays[0] != slatesVotesSender3 &&
-           yays[0] != slatesVotesSender4
+    assert yaysLength >= 1 &&
+           (lengthVotesSender < 1 || yays[0] != slatesVotesSender0) &&
+           (lengthVotesSender < 2 || yays[0] != slatesVotesSender1) &&
+           (lengthVotesSender < 3 || yays[0] != slatesVotesSender2) &&
+           (lengthVotesSender < 4 || yays[0] != slatesVotesSender3) &&
+           (lengthVotesSender < 5 || yays[0] != slatesVotesSender4)
            => approvalsYays0After == approvalsYays0Before + depositsSender, "vote did not increase approvals[yays0] by depositsSender";
-    assert yays.length >= 2 &&
-           yays[1] != slatesVotesSender0 &&
-           yays[1] != slatesVotesSender1 &&
-           yays[1] != slatesVotesSender2 &&
-           yays[1] != slatesVotesSender3 &&
-           yays[1] != slatesVotesSender4
+    assert yaysLength >= 2 &&
+           (lengthVotesSender < 1 || yays[1] != slatesVotesSender0) &&
+           (lengthVotesSender < 2 || yays[1] != slatesVotesSender1) &&
+           (lengthVotesSender < 3 || yays[1] != slatesVotesSender2) &&
+           (lengthVotesSender < 4 || yays[1] != slatesVotesSender3) &&
+           (lengthVotesSender < 5 || yays[1] != slatesVotesSender4)
            => approvalsYays1After == approvalsYays1Before + depositsSender, "vote did not increase approvals[yays1] by depositsSender";
-    assert yays.length >= 3 &&
-           yays[2] != slatesVotesSender0 &&
-           yays[2] != slatesVotesSender1 &&
-           yays[2] != slatesVotesSender2 &&
-           yays[2] != slatesVotesSender3 &&
-           yays[2] != slatesVotesSender4
+    assert yaysLength >= 3 &&
+           (lengthVotesSender < 1 || yays[2] != slatesVotesSender0) &&
+           (lengthVotesSender < 2 || yays[2] != slatesVotesSender1) &&
+           (lengthVotesSender < 3 || yays[2] != slatesVotesSender2) &&
+           (lengthVotesSender < 4 || yays[2] != slatesVotesSender3) &&
+           (lengthVotesSender < 5 || yays[2] != slatesVotesSender4)
            => approvalsYays2After == approvalsYays2Before + depositsSender, "vote did not increase approvals[yays2] by depositsSender";
-    assert yays.length >= 4 &&
-           yays[3] != slatesVotesSender0 &&
-           yays[3] != slatesVotesSender1 &&
-           yays[3] != slatesVotesSender2 &&
-           yays[3] != slatesVotesSender3 &&
-           yays[3] != slatesVotesSender4
+    assert yaysLength >= 4 &&
+           (lengthVotesSender < 1 || yays[3] != slatesVotesSender0) &&
+           (lengthVotesSender < 2 || yays[3] != slatesVotesSender1) &&
+           (lengthVotesSender < 3 || yays[3] != slatesVotesSender2) &&
+           (lengthVotesSender < 4 || yays[3] != slatesVotesSender3) &&
+           (lengthVotesSender < 5 || yays[3] != slatesVotesSender4)
            => approvalsYays3After == approvalsYays3Before + depositsSender, "vote did not increase approvals[yays3] by depositsSender";
-    assert yays.length == 5 &&
-           yays[4] != slatesVotesSender0 &&
-           yays[4] != slatesVotesSender1 &&
-           yays[4] != slatesVotesSender2 &&
-           yays[4] != slatesVotesSender3 &&
-           yays[4] != slatesVotesSender4
+    assert yaysLength == 5 &&
+           (lengthVotesSender < 1 || yays[4] != slatesVotesSender0) &&
+           (lengthVotesSender < 2 || yays[4] != slatesVotesSender1) &&
+           (lengthVotesSender < 3 || yays[4] != slatesVotesSender2) &&
+           (lengthVotesSender < 4 || yays[4] != slatesVotesSender3) &&
+           (lengthVotesSender < 5 || yays[4] != slatesVotesSender4)
            => approvalsYays4After == approvalsYays4Before + depositsSender, "vote did not increase approvals[yays4] by depositsSender";
     assert approvalsYaysNotSenderAfter == approvalsYaysNotSenderBefore, "vote did not keep unchanged the rest of approvals[x]";
     assert depositsAfter == depositsBefore, "vote did not keep unchanged every deposits[x]";
@@ -750,30 +740,20 @@ rule vote_yays_revert(address[] yays) {
 
     // This is to avoid that the hash of the new voting array can collide with the hash of the prev existing voted (if not the same content)
     require lengthVotesSender != yaysLength => votesSender != slateYays;
-    require lengthVotesSender == yaysLength && yays.length == 1 &&
+    require lengthVotesSender == yaysLength && yaysLength >= 1 &&
             slatesVotesSender0 != yays[0]
             => votesSender != slateYays;
-    require lengthVotesSender == yaysLength && yays.length == 2 &&
-            (slatesVotesSender0 != yays[0] ||
-             slatesVotesSender1 != yays[1])
+    require lengthVotesSender == yaysLength && yaysLength >= 2 &&
+            slatesVotesSender1 != yays[1]
             => votesSender != slateYays;
-    require lengthVotesSender == yaysLength && yays.length == 3 &&
-            (slatesVotesSender0 != yays[0] ||
-             slatesVotesSender1 != yays[1] ||
-             slatesVotesSender2 != yays[2])
+    require lengthVotesSender == yaysLength && yaysLength >= 3 &&
+            slatesVotesSender2 != yays[2]
             => votesSender != slateYays;
-    require lengthVotesSender == yaysLength && yays.length == 4 &&
-            (slatesVotesSender0 != yays[0] ||
-             slatesVotesSender1 != yays[1] ||
-             slatesVotesSender2 != yays[2] ||
-             slatesVotesSender3 != yays[3])
+    require lengthVotesSender == yaysLength && yaysLength >= 4 &&
+            slatesVotesSender3 != yays[3]
             => votesSender != slateYays;
-    require lengthVotesSender == yaysLength && yays.length == 5 &&
-            (slatesVotesSender0 != yays[0] ||
-             slatesVotesSender1 != yays[1] ||
-             slatesVotesSender2 != yays[2] ||
-             slatesVotesSender3 != yays[3] ||
-             slatesVotesSender4 != yays[4])
+    require lengthVotesSender == yaysLength && yaysLength == 5 &&
+            slatesVotesSender4 != yays[4]
             => votesSender != slateYays;
     //
 
@@ -951,11 +931,11 @@ rule vote_slate(bytes32 slate) {
     assert votesSenderAfter == slate, "vote did not set votes[sender] to slate";
     assert votesOtherAfter == votesOtherBefore, "vote did not keep unchanged the rest of votes[x]";
     assert lengthVotesSender >= 1 &&
-           slatesVotesSender0 != slatesSlate0 &&
-           slatesVotesSender0 != slatesSlate1 &&
-           slatesVotesSender0 != slatesSlate2 &&
-           slatesVotesSender0 != slatesSlate3 &&
-           slatesVotesSender0 != slatesSlate4
+           (lengthSlate < 1 || slatesVotesSender0 != slatesSlate0) &&
+           (lengthSlate < 2 || slatesVotesSender0 != slatesSlate1) &&
+           (lengthSlate < 3 || slatesVotesSender0 != slatesSlate2) &&
+           (lengthSlate < 4 || slatesVotesSender0 != slatesSlate3) &&
+           (lengthSlate < 5 || slatesVotesSender0 != slatesSlate4)
            => approvalsSlatesVotesSender0After == approvalsSlatesVotesSender0Before - depositsSender, "vote did not decrease approvals[slatesVotesSender0] by depositsSender";
     assert lengthVotesSender >= 1 &&
            (lengthSlate >= 1 && slatesVotesSender0 == slatesSlate0 ||
@@ -965,11 +945,11 @@ rule vote_slate(bytes32 slate) {
             lengthSlate == 5 && slatesVotesSender0 == slatesSlate4)
            => approvalsSlatesVotesSender0After == approvalsSlatesVotesSender0Before, "vote did not keep unchanged approvals[slatesVotesSender0]";
     assert lengthVotesSender >= 2 &&
-           slatesVotesSender1 != slatesSlate0 &&
-           slatesVotesSender1 != slatesSlate1 &&
-           slatesVotesSender1 != slatesSlate2 &&
-           slatesVotesSender1 != slatesSlate3 &&
-           slatesVotesSender1 != slatesSlate4
+           (lengthSlate < 1 || slatesVotesSender1 != slatesSlate0) &&
+           (lengthSlate < 2 || slatesVotesSender1 != slatesSlate1) &&
+           (lengthSlate < 3 || slatesVotesSender1 != slatesSlate2) &&
+           (lengthSlate < 4 || slatesVotesSender1 != slatesSlate3) &&
+           (lengthSlate < 5 || slatesVotesSender1 != slatesSlate4)
            => approvalsSlatesVotesSender1After == approvalsSlatesVotesSender1Before - depositsSender, "vote did not decrease approvals[slatesVotesSender1] by depositsSender";
     assert lengthVotesSender >= 2 &&
            (lengthSlate >= 1 && slatesVotesSender1 == slatesSlate0 ||
@@ -979,11 +959,11 @@ rule vote_slate(bytes32 slate) {
             lengthSlate == 5 && slatesVotesSender1 == slatesSlate4)
            => approvalsSlatesVotesSender1After == approvalsSlatesVotesSender1Before, "vote did not keep unchanged approvals[slatesVotesSender1]";
     assert lengthVotesSender >= 3 &&
-           slatesVotesSender2 != slatesSlate0 &&
-           slatesVotesSender2 != slatesSlate1 &&
-           slatesVotesSender2 != slatesSlate2 &&
-           slatesVotesSender2 != slatesSlate3 &&
-           slatesVotesSender2 != slatesSlate4
+           (lengthSlate < 1 || slatesVotesSender2 != slatesSlate0) &&
+           (lengthSlate < 2 || slatesVotesSender2 != slatesSlate1) &&
+           (lengthSlate < 3 || slatesVotesSender2 != slatesSlate2) &&
+           (lengthSlate < 4 || slatesVotesSender2 != slatesSlate3) &&
+           (lengthSlate < 5 || slatesVotesSender2 != slatesSlate4)
            => approvalsSlatesVotesSender2After == approvalsSlatesVotesSender2Before - depositsSender, "vote did not decrease approvals[slatesVotesSender2] by depositsSender";
     assert lengthVotesSender >= 3 &&
            (lengthSlate >= 1 && slatesVotesSender2 == slatesSlate0 ||
@@ -993,11 +973,11 @@ rule vote_slate(bytes32 slate) {
             lengthSlate == 5 && slatesVotesSender2 == slatesSlate4)
            => approvalsSlatesVotesSender2After == approvalsSlatesVotesSender2Before, "vote did not keep unchanged approvals[slatesVotesSender2]";
     assert lengthVotesSender >= 4 &&
-           slatesVotesSender3 != slatesSlate0 &&
-           slatesVotesSender3 != slatesSlate1 &&
-           slatesVotesSender3 != slatesSlate2 &&
-           slatesVotesSender3 != slatesSlate3 &&
-           slatesVotesSender3 != slatesSlate4
+           (lengthSlate < 1 || slatesVotesSender3 != slatesSlate0) &&
+           (lengthSlate < 2 || slatesVotesSender3 != slatesSlate1) &&
+           (lengthSlate < 3 || slatesVotesSender3 != slatesSlate2) &&
+           (lengthSlate < 4 || slatesVotesSender3 != slatesSlate3) &&
+           (lengthSlate < 5 || slatesVotesSender3 != slatesSlate4)
            => approvalsSlatesVotesSender3After == approvalsSlatesVotesSender3Before - depositsSender, "vote did not decrease approvals[slatesVotesSender3] by depositsSender";
     assert lengthVotesSender >= 4 &&
            (lengthSlate >= 1 && slatesVotesSender3 == slatesSlate0 ||
@@ -1007,11 +987,11 @@ rule vote_slate(bytes32 slate) {
             lengthSlate == 5 && slatesVotesSender3 == slatesSlate4)
            => approvalsSlatesVotesSender3After == approvalsSlatesVotesSender3Before, "vote did not keep unchanged approvals[slatesVotesSender3]";
     assert lengthVotesSender == 5 &&
-           slatesVotesSender4 != slatesSlate0 &&
-           slatesVotesSender4 != slatesSlate1 &&
-           slatesVotesSender4 != slatesSlate2 &&
-           slatesVotesSender4 != slatesSlate3 &&
-           slatesVotesSender4 != slatesSlate4
+           (lengthSlate < 1 || slatesVotesSender4 != slatesSlate0) &&
+           (lengthSlate < 2 || slatesVotesSender4 != slatesSlate1) &&
+           (lengthSlate < 3 || slatesVotesSender4 != slatesSlate2) &&
+           (lengthSlate < 4 || slatesVotesSender4 != slatesSlate3) &&
+           (lengthSlate < 5 || slatesVotesSender4 != slatesSlate4)
            => approvalsSlatesVotesSender4After == approvalsSlatesVotesSender4Before - depositsSender, "vote did not decrease approvals[slatesVotesSender4] by depositsSender";
     assert lengthVotesSender == 5 &&
            (lengthSlate >= 1 && slatesVotesSender4 == slatesSlate0 ||
@@ -1021,39 +1001,39 @@ rule vote_slate(bytes32 slate) {
             lengthSlate == 5 && slatesVotesSender4 == slatesSlate4)
            => approvalsSlatesVotesSender4After == approvalsSlatesVotesSender4Before, "vote did not keep unchanged approvals[slatesVotesSender4]";
     assert lengthSlate >= 1 &&
-           slatesSlate0 != slatesVotesSender0 &&
-           slatesSlate0 != slatesVotesSender1 &&
-           slatesSlate0 != slatesVotesSender2 &&
-           slatesSlate0 != slatesVotesSender3 &&
-           slatesSlate0 != slatesVotesSender4
+           (lengthVotesSender < 1 || slatesSlate0 != slatesVotesSender0) &&
+           (lengthVotesSender < 2 || slatesSlate0 != slatesVotesSender1) &&
+           (lengthVotesSender < 3 || slatesSlate0 != slatesVotesSender2) &&
+           (lengthVotesSender < 4 || slatesSlate0 != slatesVotesSender3) &&
+           (lengthVotesSender < 5 || slatesSlate0 != slatesVotesSender4)
            => approvalsSlatesSlate0After == approvalsSlatesSlate0Before + depositsSender, "vote did not increase approvals[slatesSlate0] by depositsSender";
     assert lengthSlate >= 2 &&
-           slatesSlate1 != slatesVotesSender0 &&
-           slatesSlate1 != slatesVotesSender1 &&
-           slatesSlate1 != slatesVotesSender2 &&
-           slatesSlate1 != slatesVotesSender3 &&
-           slatesSlate1 != slatesVotesSender4
+           (lengthVotesSender < 1 || slatesSlate1 != slatesVotesSender0) &&
+           (lengthVotesSender < 2 || slatesSlate1 != slatesVotesSender1) &&
+           (lengthVotesSender < 3 || slatesSlate1 != slatesVotesSender2) &&
+           (lengthVotesSender < 4 || slatesSlate1 != slatesVotesSender3) &&
+           (lengthVotesSender < 5 || slatesSlate1 != slatesVotesSender4)
            => approvalsSlatesSlate1After == approvalsSlatesSlate1Before + depositsSender, "vote did not increase approvals[slatesSlate1] by depositsSender";
     assert lengthSlate >= 3 &&
-           slatesSlate2 != slatesVotesSender0 &&
-           slatesSlate2 != slatesVotesSender1 &&
-           slatesSlate2 != slatesVotesSender2 &&
-           slatesSlate2 != slatesVotesSender3 &&
-           slatesSlate2 != slatesVotesSender4
+           (lengthVotesSender < 1 || slatesSlate2 != slatesVotesSender0) &&
+           (lengthVotesSender < 2 || slatesSlate2 != slatesVotesSender1) &&
+           (lengthVotesSender < 3 || slatesSlate2 != slatesVotesSender2) &&
+           (lengthVotesSender < 4 || slatesSlate2 != slatesVotesSender3) &&
+           (lengthVotesSender < 5 || slatesSlate2 != slatesVotesSender4)
            => approvalsSlatesSlate2After == approvalsSlatesSlate2Before + depositsSender, "vote did not increase approvals[slatesSlate2] by depositsSender";
     assert lengthSlate >= 4 &&
-           slatesSlate3 != slatesVotesSender0 &&
-           slatesSlate3 != slatesVotesSender1 &&
-           slatesSlate3 != slatesVotesSender2 &&
-           slatesSlate3 != slatesVotesSender3 &&
-           slatesSlate3 != slatesVotesSender4
+           (lengthVotesSender < 1 || slatesSlate3 != slatesVotesSender0) &&
+           (lengthVotesSender < 2 || slatesSlate3 != slatesVotesSender1) &&
+           (lengthVotesSender < 3 || slatesSlate3 != slatesVotesSender2) &&
+           (lengthVotesSender < 4 || slatesSlate3 != slatesVotesSender3) &&
+           (lengthVotesSender < 5 || slatesSlate3 != slatesVotesSender4)
            => approvalsSlatesSlate3After == approvalsSlatesSlate3Before + depositsSender, "vote did not increase approvals[slatesSlate3] by depositsSender";
     assert lengthSlate == 5 &&
-           slatesSlate4 != slatesVotesSender0 &&
-           slatesSlate4 != slatesVotesSender1 &&
-           slatesSlate4 != slatesVotesSender2 &&
-           slatesSlate4 != slatesVotesSender3 &&
-           slatesSlate4 != slatesVotesSender4
+           (lengthVotesSender < 1 || slatesSlate4 != slatesVotesSender0) &&
+           (lengthVotesSender < 2 || slatesSlate4 != slatesVotesSender1) &&
+           (lengthVotesSender < 3 || slatesSlate4 != slatesVotesSender2) &&
+           (lengthVotesSender < 4 || slatesSlate4 != slatesVotesSender3) &&
+           (lengthVotesSender < 5 || slatesSlate4 != slatesVotesSender4)
            => approvalsSlatesSlate4After == approvalsSlatesSlate4Before + depositsSender, "vote did not increase approvals[newYaysSender4] by depositsSender";
     assert approvalsSlatesOtherAnyAfter == approvalsSlatesOtherAnyBefore, "vote did not keep unchanged the rest of approvals[x]";
     assert depositsAfter == depositsBefore, "vote did not keep unchanged every deposits[x]";
