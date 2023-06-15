@@ -15,9 +15,27 @@ methods {
     function maxYays() external returns (uint256) envfree;
     function launchThreshold() external returns (uint256) envfree;
     function length(bytes32) external returns (uint256) envfree;
+    function authority() external returns (address) envfree;
+    function owner() external returns (address) envfree;
+    function GOV() external returns (address) envfree;
+    function IOU() external returns (address) envfree;
+    function MAX_YAYS() external returns (uint256) envfree;
+    function LAUNCH_THRESHOLD() external returns (uint256) envfree;
     function gov.allowance(address, address) external returns (uint256) envfree;
     function gov.balanceOf(address) external returns (uint256) envfree;
     function aux.hashYays(address[]) external returns (bytes32) envfree;
+}
+
+// Verify correct behavior of old getters
+rule oldGetters() {
+    address addr0 = 0;
+
+    assert authority() == currentContract, "authority did not return address(this)";
+    assert owner() == addr0, "owner did not return address(0)";
+    assert GOV() == gov(), "GOV did not return gov";
+    assert IOU() == addr0, "IOU did not return address(0)";
+    assert MAX_YAYS() == maxYays(), "MAX_YAYS did not return maxYays()";
+    assert LAUNCH_THRESHOLD() == launchThreshold(), "LAUNCH_THRESHOLD did not return launchThreshold()";
 }
 
 // Verify correct storage changes for non reverting launch
