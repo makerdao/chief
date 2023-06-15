@@ -34,6 +34,7 @@ rule launch() {
     mathint approvalsBefore = approvals(anyAddr);
     mathint depositsBefore = deposits(anyAddr);
     mathint lastBefore = last(anyAddr);
+    mathint govBalanceOfBefore = gov.balanceOf(anyAddr);
 
     launch(e);
 
@@ -44,6 +45,7 @@ rule launch() {
     mathint approvalsAfter = approvals(anyAddr);
     mathint depositsAfter = deposits(anyAddr);
     mathint lastAfter = last(anyAddr);
+    mathint govBalanceOfAfter = gov.balanceOf(anyAddr);
 
     assert liveAfter == 1, "launch did not set live to 1";
     assert hatAfter == hatBefore, "launch did not keep unchanged hat";
@@ -52,6 +54,7 @@ rule launch() {
     assert approvalsAfter == approvalsBefore, "launch did not keep unchanged every approvals[x]";
     assert depositsAfter == depositsBefore, "launch did not keep unchanged every deposits[x]";
     assert lastAfter == lastBefore, "launch did not keep unchanged every last[x]";
+    assert govBalanceOfAfter == govBalanceOfBefore, "launch did not keep unchanged every gov.balanceOf[x]";
 }
 
 // Verify revert rules on launch
@@ -395,6 +398,7 @@ rule etch(address[] yays) {
     mathint approvalsBefore = approvals(anyAddr);
     mathint depositsBefore = deposits(anyAddr);
     mathint lastBefore = last(anyAddr);
+    mathint govBalanceOfBefore = gov.balanceOf(anyAddr);
 
     etch(e, yays);
 
@@ -412,6 +416,7 @@ rule etch(address[] yays) {
     mathint approvalsAfter = approvals(anyAddr);
     mathint depositsAfter = deposits(anyAddr);
     mathint lastAfter = last(anyAddr);
+    mathint govBalanceOfAfter = gov.balanceOf(anyAddr);
 
     assert liveAfter == liveBefore, "etch did not keep unchanged live";
     assert hatAfter == hatBefore, "etch did not keep unchanged hat";
@@ -426,6 +431,7 @@ rule etch(address[] yays) {
     assert approvalsAfter == approvalsBefore, "etch did not keep unchanged every approvals[x]";
     assert depositsAfter == depositsBefore, "etch did not keep unchanged every deposits[x]";
     assert lastAfter == lastBefore, "etch did not keep unchanged every last[x]";
+    assert govBalanceOfAfter == govBalanceOfBefore, "etch did not keep unchanged every gov.balanceOf[x]";
 }
 
 // Verify revert rules on etch
@@ -544,6 +550,7 @@ rule vote_yays(address[] yays) {
     mathint depositsSender = deposits(e.msg.sender);
     mathint depositsBefore = deposits(anyAddr);
     mathint lastBefore = last(anyAddr);
+    mathint govBalanceOfBefore = gov.balanceOf(anyAddr);
 
     vote(e, yays);
 
@@ -571,6 +578,7 @@ rule vote_yays(address[] yays) {
     mathint approvalsYaysNotSenderAfter = approvals(slatesOtherAny);
     mathint depositsAfter = deposits(anyAddr);
     mathint lastAfter = last(anyAddr);
+    mathint govBalanceOfAfter = gov.balanceOf(anyAddr);
 
     assert liveAfter == liveBefore, "vote did not keep unchanged live";
     assert hatAfter == hatBefore, "vote did not keep unchanged hat";
@@ -656,6 +664,7 @@ rule vote_yays(address[] yays) {
     assert approvalsYaysNotSenderAfter == approvalsYaysNotSenderBefore, "vote did not keep unchanged the rest of approvals[x]";
     assert depositsAfter == depositsBefore, "vote did not keep unchanged every deposits[x]";
     assert lastAfter == lastBefore, "vote did not keep unchanged every last[x]";
+    assert govBalanceOfAfter == govBalanceOfBefore, "vote did not keep unchanged every gov.balanceOf[x]";
 }
 
 // Verify revert rules on vote
@@ -868,6 +877,7 @@ rule vote_slate(bytes32 slate) {
     mathint depositsSender = deposits(e.msg.sender);
     mathint depositsBefore = deposits(anyAddr);
     mathint lastBefore = last(anyAddr);
+    mathint govBalanceOfBefore = gov.balanceOf(anyAddr);
 
     vote(e, slate);
 
@@ -889,6 +899,7 @@ rule vote_slate(bytes32 slate) {
     mathint approvalsSlatesOtherAnyAfter = approvals(slatesOtherAny);
     mathint depositsAfter = deposits(anyAddr);
     mathint lastAfter = last(anyAddr);
+    mathint govBalanceOfAfter = gov.balanceOf(anyAddr);
 
     assert liveAfter == liveBefore, "vote did not keep unchanged live";
     assert hatAfter == hatBefore, "vote did not keep unchanged hat";
@@ -968,6 +979,7 @@ rule vote_slate(bytes32 slate) {
     assert approvalsSlatesOtherAnyAfter == approvalsSlatesOtherAnyBefore, "vote did not keep unchanged the rest of approvals[x]";
     assert depositsAfter == depositsBefore, "vote did not keep unchanged every deposits[x]";
     assert lastAfter == lastBefore, "vote did not keep unchanged every last[x]";
+    assert govBalanceOfAfter == govBalanceOfBefore, "vote did not keep unchanged every gov.balanceOf[x]";
 }
 
 // Verify revert rules on vote
@@ -1094,6 +1106,7 @@ rule lift(address whom) {
     mathint approvalsBefore = approvals(anyAddr);
     mathint depositsBefore = deposits(anyAddr);
     mathint lastBefore = last(anyAddr);
+    mathint govBalanceOfBefore = gov.balanceOf(anyAddr);
 
     lift(e, whom);
 
@@ -1104,6 +1117,7 @@ rule lift(address whom) {
     mathint approvalsAfter = approvals(anyAddr);
     mathint depositsAfter = deposits(anyAddr);
     mathint lastAfter = last(anyAddr);
+    mathint govBalanceOfAfter = gov.balanceOf(anyAddr);
 
     assert liveAfter == liveBefore, "lift did not keep unchanged live";
     assert hatAfter == whom, "lift did not set hat to whom";
@@ -1112,6 +1126,7 @@ rule lift(address whom) {
     assert approvalsAfter == approvalsBefore, "lift did not keep unchanged every approvals[x]";
     assert depositsAfter == depositsBefore, "lift did not keep unchanged every deposits[x]";
     assert lastAfter == lastBefore, "lift did not keep unchanged every last[x]";
+    assert govBalanceOfAfter == govBalanceOfBefore, "lift did not keep unchanged every gov.balanceOf[x]";
 }
 
 // Verify revert rules on lift
