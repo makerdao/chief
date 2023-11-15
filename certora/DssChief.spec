@@ -92,12 +92,8 @@ rule launch_revert() {
     bool revert3 = hat != addr0;
     bool revert4 = approvalsAddr0 < launchThreshold;
 
-    assert revert1 => lastReverted, "revert1 failed";
-    assert revert2 => lastReverted, "revert2 failed";
-    assert revert3 => lastReverted, "revert3 failed";
-    assert revert4 => lastReverted, "revert4 failed";
-    assert lastReverted => revert1 || revert2 || revert3 ||
-                           revert4, "Revert rules are not covering all the cases";
+    assert lastReverted <=> revert1 || revert2 || revert3 ||
+                            revert4, "Revert rules failed";
 }
 
 // Verify correct storage changes for non reverting lock
@@ -234,16 +230,9 @@ rule lock_revert(uint256 wad) {
     bool revert6 = lengthVotesSender >= 4 && approvalsSlatesVotesSender3 + wad > max_uint256;
     bool revert7 = lengthVotesSender == 5 && approvalsSlatesVotesSender4 + wad > max_uint256;
 
-    assert revert1 => lastReverted, "revert1 failed";
-    assert revert2 => lastReverted, "revert2 failed";
-    assert revert3 => lastReverted, "revert3 failed";
-    assert revert4 => lastReverted, "revert4 failed";
-    assert revert5 => lastReverted, "revert5 failed";
-    assert revert6 => lastReverted, "revert6 failed";
-    assert revert7 => lastReverted, "revert7 failed";
-    assert lastReverted => revert1 || revert2 || revert3 ||
-                           revert4 || revert5 || revert6 ||
-                           revert7, "Revert rules are not covering all the cases";
+    assert lastReverted <=> revert1 || revert2 || revert3 ||
+                            revert4 || revert5 || revert6 ||
+                            revert7, "Revert rules failed";
 }
 
 // Verify correct storage changes for non reverting free
@@ -380,17 +369,9 @@ rule free_revert(uint256 wad) {
     bool revert7 = lengthVotesSender >= 4 && approvalsSlatesVotesSender3 < to_mathint(wad);
     bool revert8 = lengthVotesSender == 5 && approvalsSlatesVotesSender4 < to_mathint(wad);
 
-    assert revert1 => lastReverted, "revert1 failed";
-    assert revert2 => lastReverted, "revert2 failed";
-    assert revert3 => lastReverted, "revert3 failed";
-    assert revert4 => lastReverted, "revert4 failed";
-    assert revert5 => lastReverted, "revert5 failed";
-    assert revert6 => lastReverted, "revert6 failed";
-    assert revert7 => lastReverted, "revert7 failed";
-    assert revert8 => lastReverted, "revert8 failed";
-    assert lastReverted => revert1 || revert2 || revert3 ||
-                           revert4 || revert5 || revert6 ||
-                           revert7 || revert8, "Revert rules are not covering all the cases";
+    assert lastReverted <=> revert1 || revert2 || revert3 ||
+                            revert4 || revert5 || revert6 ||
+                            revert7 || revert8, "Revert rules failed";
 }
 
 // Verify correct storage changes for non reverting etch
@@ -472,14 +453,8 @@ rule etch_revert(address[] yays) {
     bool revert5 = yaysLength >= 4 && yays[2] >= yays[3];
     bool revert6 = yaysLength == 5 && yays[3] >= yays[4];
 
-    assert revert1 => lastReverted, "revert1 failed";
-    assert revert2 => lastReverted, "revert2 failed";
-    assert revert3 => lastReverted, "revert3 failed";
-    assert revert4 => lastReverted, "revert4 failed";
-    assert revert5 => lastReverted, "revert5 failed";
-    assert revert6 => lastReverted, "revert6 failed";
-    assert lastReverted => revert1 || revert2 || revert3 ||
-                           revert4 || revert5 || revert6, "Revert rules are not covering all the cases";
+    assert lastReverted <=> revert1 || revert2 || revert3 ||
+                            revert4 || revert5 || revert6, "Revert rules failed";
 }
 
 // Verify correct storage changes for non reverting vote
@@ -803,29 +778,12 @@ rule vote_yays_revert(address[] yays) {
                     (lengthVotesSender < 5 || yays4 != slatesVotesSender4) &&
                     approvalsYays4 + depositsSender > max_uint256;
 
-    assert revert1  => lastReverted, "revert1 failed";
-    assert revert2  => lastReverted, "revert2 failed";
-    assert revert3  => lastReverted, "revert3 failed";
-    assert revert4  => lastReverted, "revert4 failed";
-    assert revert5  => lastReverted, "revert5 failed";
-    assert revert6  => lastReverted, "revert6 failed";
-    assert revert7  => lastReverted, "revert7 failed";
-    assert revert8  => lastReverted, "revert8 failed";
-    assert revert9  => lastReverted, "revert9 failed";
-    assert revert10 => lastReverted, "revert10 failed";
-    assert revert11 => lastReverted, "revert11 failed";
-    assert revert12 => lastReverted, "revert12 failed";
-    assert revert13 => lastReverted, "revert13 failed";
-    assert revert14 => lastReverted, "revert14 failed";
-    assert revert15 => lastReverted, "revert15 failed";
-    assert revert16 => lastReverted, "revert12 failed";
-    assert revert17 => lastReverted, "revert17 failed";
-    assert lastReverted => revert1  || revert2  || revert3  ||
-                           revert4  || revert5  || revert6  ||
-                           revert7  || revert8  || revert9  ||
-                           revert10 || revert11 || revert12 ||
-                           revert13 || revert14 || revert15 ||
-                           revert16 || revert17, "Revert rules are not covering all the cases";
+    assert lastReverted <=> revert1  || revert2  || revert3  ||
+                            revert4  || revert5  || revert6  ||
+                            revert7  || revert8  || revert9  ||
+                            revert10 || revert11 || revert12 ||
+                            revert13 || revert14 || revert15 ||
+                            revert16 || revert17, "Revert rules failed";
 }
 
 // Verify correct storage changes for non reverting vote
@@ -1092,22 +1050,10 @@ rule vote_slate_revert(bytes32 slate) {
                     (lengthVotesSender < 5 || slatesSlate4 != slatesVotesSender4) &&
                     approvalsSlatesSlate4 + depositsSender > max_uint256;
 
-    assert revert1  => lastReverted, "revert1 failed";
-    assert revert2  => lastReverted, "revert2 failed";
-    assert revert3  => lastReverted, "revert3 failed";
-    assert revert4  => lastReverted, "revert4 failed";
-    assert revert5  => lastReverted, "revert5 failed";
-    assert revert6  => lastReverted, "revert6 failed";
-    assert revert7  => lastReverted, "revert7 failed";
-    assert revert8  => lastReverted, "revert8 failed";
-    assert revert9  => lastReverted, "revert9 failed";
-    assert revert10 => lastReverted, "revert10 failed";
-    assert revert11 => lastReverted, "revert11 failed";
-    assert revert12 => lastReverted, "revert12 failed";
-    assert lastReverted => revert1  || revert2  || revert3 ||
-                           revert4  || revert5  || revert6 ||
-                           revert7  || revert8  || revert9 ||
-                           revert10 || revert11 || revert12, "Revert rules are not covering all the cases";
+    assert lastReverted <=> revert1  || revert2  || revert3 ||
+                            revert4  || revert5  || revert6 ||
+                            revert7  || revert8  || revert9 ||
+                            revert10 || revert11 || revert12, "Revert rules failed";
 }
 
 // Verify correct storage changes for non reverting launch
@@ -1160,7 +1106,5 @@ rule lift_revert(address whom) {
     bool revert1 = e.msg.value > 0;
     bool revert2 = approvalsWhom <= approvalsHat;
 
-    assert revert1 => lastReverted, "revert1 failed";
-    assert revert2 => lastReverted, "revert2 failed";
-    assert lastReverted => revert1 || revert2, "Revert rules are not covering all the cases";
+    assert lastReverted <=> revert1 || revert2, "Revert rules failed";
 }
