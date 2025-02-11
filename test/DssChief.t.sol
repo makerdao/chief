@@ -397,10 +397,10 @@ contract DssChiefTest is Test {
 
         vm.expectEmit();
         emit Hold(c1);
-        chief.hold(c1);                                    // can reserve hold
+        chief.hold(c1);                                    // can hold
         assertEq(chief.holdTrigger(), block.number);
         vm.prank(uLarge); chief.lock(10 ether);            // can still lock
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold again
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold again
         chief.hold(c1);
 
         // move to first block of the hold
@@ -408,7 +408,7 @@ contract DssChiefTest is Test {
 
         vm.expectRevert("DssChief/no-lock-during-hold");
         vm.prank(uLarge); chief.lock(10 ether);            // can not lock
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold
         chief.hold(c1);
 
         // move to last block of the hold
@@ -416,31 +416,31 @@ contract DssChiefTest is Test {
 
         vm.expectRevert("DssChief/no-lock-during-hold");
         vm.prank(uLarge); chief.lock(10 ether);            // can not lock
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold
         chief.hold(c1);
 
         // move to first block of the cooldown
         vm.roll(block.number + 1);
 
         vm.prank(uLarge); chief.lock(10 ether);            // can lock again
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold
         chief.hold(c1);
 
         // move to last block of the cooldown
         vm.roll(block.number + 18);
 
         vm.prank(uLarge); chief.lock(10 ether);            // can still lock
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold
         chief.hold(c1);
 
         // move to first block after the cooldown
         vm.roll(block.number + 1);
 
         vm.prank(uLarge); chief.lock(10 ether);            // can lock
-        chief.hold(c1);                                    // can reserve hold again
+        chief.hold(c1);                                    // can hold again
         assertEq(chief.holdTrigger(), block.number);
         vm.prank(uLarge); chief.lock(10 ether);            // can still lock
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold again
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold again
         chief.hold(c1);
 
         // move to first block of the new hold
@@ -448,7 +448,7 @@ contract DssChiefTest is Test {
 
         vm.expectRevert("DssChief/no-lock-during-hold");
         vm.prank(uLarge); chief.lock(10 ether);            // can not lock
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold
         chief.hold(c1);
     }
 
