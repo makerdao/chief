@@ -51,6 +51,14 @@ contract DssChiefTest is Test {
     address uMedium;
     address uSmall;
 
+    event Launch();
+    event Lock(uint256 wad);
+    event Free(uint256 wad);
+    event Etch(bytes32 indexed slate, address[] yays);
+    event Vote(bytes32 indexed slate);
+    event Hold(address indexed whom);
+    event Lift(address indexed whom);
+
     function setUp() public {
         gov = new TokenMock();
         gov.mint(address(this), initialBalance);
@@ -68,20 +76,28 @@ contract DssChiefTest is Test {
         gov.transfer(address(uLarge), uLargeInitialBalance);
         gov.transfer(address(uMedium), uMediumInitialBalance);
         gov.transfer(address(uSmall), uSmallInitialBalance);
-        vm.roll(1); // Block number = 1
+        vm.roll(1_000); // Block number = 1000
     }
 
     function _enableSystem() internal {
-        address[] memory slate = new address[](1);
-        slate[0] = address(0);
+        address[] memory yays = new address[](1);
+        yays[0] = address(0);
         gov.approve(address(chief), 80_000 ether);
-        chief.lock(80000 ether);
-        chief.vote(slate);
+        vm.expectEmit();
+        emit Lock(80_000 ether);
+        chief.lock(80_000 ether);
+        bytes32 slate = keccak256(abi.encodePacked(yays));
+        emit Etch(slate, yays);
+        vm.expectEmit();
+        emit Vote(slate);
+        chief.vote(yays);
+        vm.expectEmit();
+        emit Launch();
         chief.launch();
     }
 
     function _initialVote() internal returns (bytes32 slateID) {
-        uint uMediumLockedAmt = uMediumInitialBalance;
+        uint256 uMediumLockedAmt = uMediumInitialBalance;
         vm.startPrank(uMedium);
         gov.approve(address(chief), uMediumLockedAmt);
         chief.lock(uMediumLockedAmt);
@@ -92,7 +108,8 @@ contract DssChiefTest is Test {
         uMediumSlate[2] = c3;
         slateID = chief.vote(uMediumSlate);
 
-        // Lift the chief.
+        // Lift the chief
+        vm.roll(block.number + 1);
         chief.lift(c1);
         vm.stopPrank();
     }
@@ -120,6 +137,7 @@ contract DssChiefTest is Test {
         gov.approve(address(chief), 80000 ether);
         chief.lock(80000 ether);
         chief.vote(slate);
+        vm.roll(block.number + 1);
         chief.lift(nonzero_address);
         assertEq(chief.hat(), nonzero_address);
         assertTrue(!chief.canCall(nonzero_address, address(0), 0x00000000));
@@ -128,6 +146,7 @@ contract DssChiefTest is Test {
         chief.launch();
         slate[0] = zero_address;
         chief.vote(slate);
+        vm.roll(block.number + 1);
         chief.lift(zero_address);
         assertEq(chief.hat(), zero_address);
         assertTrue(!chief.canCall(zero_address, address(0), 0x00000000));
@@ -177,7 +196,7 @@ contract DssChiefTest is Test {
     function testLockDebitsUser() public {
         assertTrue(gov.balanceOf(address(uLarge)) == uLargeInitialBalance);
 
-        uint lockedAmt = uLargeInitialBalance / 10;
+        uint256 lockedAmt = uLargeInitialBalance / 10;
         vm.startPrank(uLarge);
         gov.approve(address(chief), lockedAmt);
         chief.lock(lockedAmt);
@@ -185,26 +204,32 @@ contract DssChiefTest is Test {
         assertTrue(gov.balanceOf(address(uLarge)) == uLargeInitialBalance - lockedAmt);
     }
 
-    function testFreeAfterLock() public {
-        uint uLargeLockedAmt = uLargeInitialBalance / 2;
+    function testLiftAfterLock() public {
+        uint256 uLargeLockedAmt = uLargeInitialBalance / 2;
         vm.startPrank(uLarge);
+        address[] memory candidates = new address[](1);
+        candidates[0] = c1;
+        chief.vote(candidates);
         gov.approve(address(chief), uLargeLockedAmt);
         chief.lock(uLargeLockedAmt);
-        vm.roll(2);
-        chief.free(uLargeLockedAmt);
+        vm.roll(block.number + 1);
+        chief.lift(c1);
     }
 
-    function testFreeAfterLockSameBlock() public {
-        uint uLargeLockedAmt = uLargeInitialBalance / 2;
+    function testLiftAfterLockSameBlock() public {
+        uint256 uLargeLockedAmt = uLargeInitialBalance / 2;
         vm.startPrank(uLarge);
+        address[] memory candidates = new address[](1);
+        candidates[0] = c1;
+        chief.vote(candidates);
         gov.approve(address(chief), uLargeLockedAmt);
         chief.lock(uLargeLockedAmt);
-        vm.expectRevert("DssChief/cant-free-same-block");
-        chief.free(uLargeLockedAmt);
+        vm.expectRevert("DssChief/cant-lift-same-block");
+        chief.lift(c1);
     }
 
     function testChangingWeightAfterVoting() public {
-        uint uLargeLockedAmt = uLargeInitialBalance / 2;
+        uint256 uLargeLockedAmt = uLargeInitialBalance / 2;
         vm.startPrank(uLarge);
         gov.approve(address(chief), uLargeLockedAmt);
         chief.lock(uLargeLockedAmt);
@@ -216,7 +241,8 @@ contract DssChiefTest is Test {
         assertTrue(chief.approvals(c1) == uLargeLockedAmt);
 
         // Changing weight should update the weight of our candidate.
-        vm.roll(2);
+        vm.expectEmit();
+        emit Free(uLargeLockedAmt);
         chief.free(uLargeLockedAmt);
         assertTrue(chief.approvals(c1) == 0);
 
@@ -254,6 +280,9 @@ contract DssChiefTest is Test {
 
         _enableSystem();
 
+        vm.roll(block.number + 1);
+        vm.expectEmit();
+        emit Lift(c1);
         chief.lift(c1);
         assertTrue(chief.canCall(c1, address(0), 0x00000000));
     }
@@ -267,6 +296,7 @@ contract DssChiefTest is Test {
         uLargeSlate[0] = c1;
         chief.vote(uLargeSlate);
 
+        vm.roll(block.number + 1);
         chief.lift(c1);
         assertTrue(!chief.canCall(c1, address(0), 0x00000000));
     }
@@ -286,9 +316,9 @@ contract DssChiefTest is Test {
 
         vm.stopPrank();
         vm.startPrank(uMedium);
-        vm.roll(2);
         chief.free(uMediumInitialBalance);
 
+        vm.roll(block.number + 1);
         chief.lift(c3);
 
         assertTrue(!chief.canCall(c1, address(0), 0x00000000));
@@ -328,6 +358,7 @@ contract DssChiefTest is Test {
         vm.stopPrank();
 
         // Update the elected set to reflect the new order.
+        vm.roll(block.number + 1);
         chief.lift(c4);
 
         // Now restore the old order using a slate ID.
@@ -337,6 +368,7 @@ contract DssChiefTest is Test {
         chief.vote(slateID);
 
         // Update the elected set to reflect the restored order.
+        vm.roll(block.number + 1);
         chief.lift(c1);
     }
 
@@ -346,6 +378,78 @@ contract DssChiefTest is Test {
 
         vm.expectRevert("DssChief/invalid-slate");
         chief.vote(bytes32(0x1010101010101010101010101010101010101010101010101010101010101010));
+    }
+
+    function testHold() public {
+        vm.prank(uLarge); gov.approve(address(chief), type(uint256).max);
+
+        assertEq(gov.balanceOf(address(uLarge)), uLargeInitialBalance);
+        assertEq(chief.holdTrigger(), 0);
+
+        vm.prank(uLarge); chief.lock(10 ether);            // can lock
+
+        vm.expectRevert("DssChief/no-reason-to-hold");
+        chief.hold(c1);
+
+        address[] memory uLargeSlate = new address[](1);
+        uLargeSlate[0] = c1;
+        vm.prank(uLarge); chief.vote(uLargeSlate);
+
+        vm.expectEmit();
+        emit Hold(c1);
+        chief.hold(c1);                                    // can reserve hold
+        assertEq(chief.holdTrigger(), block.number);
+        vm.prank(uLarge); chief.lock(10 ether);            // can still lock
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold again
+        chief.hold(c1);
+
+        // move to first block of the hold
+        vm.roll(block.number + 1);
+
+        vm.expectRevert("DssChief/no-lock-during-hold");
+        vm.prank(uLarge); chief.lock(10 ether);            // can not lock
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold
+        chief.hold(c1);
+
+        // move to last block of the hold
+        vm.roll(block.number + 4);
+
+        vm.expectRevert("DssChief/no-lock-during-hold");
+        vm.prank(uLarge); chief.lock(10 ether);            // can not lock
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold
+        chief.hold(c1);
+
+        // move to first block of the cooldown
+        vm.roll(block.number + 1);
+
+        vm.prank(uLarge); chief.lock(10 ether);            // can lock again
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold
+        chief.hold(c1);
+
+        // move to last block of the cooldown
+        vm.roll(block.number + 18);
+
+        vm.prank(uLarge); chief.lock(10 ether);            // can still lock
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold
+        chief.hold(c1);
+
+        // move to first block after the cooldown
+        vm.roll(block.number + 1);
+
+        vm.prank(uLarge); chief.lock(10 ether);            // can lock
+        chief.hold(c1);                                    // can reserve hold again
+        assertEq(chief.holdTrigger(), block.number);
+        vm.prank(uLarge); chief.lock(10 ether);            // can still lock
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold again
+        chief.hold(c1);
+
+        // move to first block of the new hold
+        vm.roll(block.number + 1);
+
+        vm.expectRevert("DssChief/no-lock-during-hold");
+        vm.prank(uLarge); chief.lock(10 ether);            // can not lock
+        vm.expectRevert("DssChief/cooldown-not-finished"); // can not reserve hold
+        chief.hold(c1);
     }
 
     function testChiefOwner() public {

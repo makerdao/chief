@@ -38,7 +38,8 @@ contract DssChief is DSAuthority {
     mapping(address => bytes32)   public votes;
     mapping(address => uint256)   public approvals;
     mapping(address => uint256)   public deposits;
-    mapping(address => uint256)   public last;
+    uint256                       public last;
+    uint256                       public holdTrigger;
 
     bytes32 constant EMPTY_SLATE = keccak256(abi.encodePacked(new address[](0)));
 
@@ -46,11 +47,15 @@ contract DssChief is DSAuthority {
     uint256 immutable public maxYays;
     uint256 immutable public launchThreshold;
 
+    uint256 public constant HOLD_SIZE     = 5;
+    uint256 public constant HOLD_COOLDOWN = 20;
+
     event Launch();
     event Lock(uint256 wad);
     event Free(uint256 wad);
     event Etch(bytes32 indexed slate, address[] yays);
     event Vote(bytes32 indexed slate);
+    event Hold(address indexed whom);
     event Lift(address indexed whom);
 
     constructor(address gov_, uint256 maxYays_, uint256 launchThreshold_) {
@@ -92,7 +97,8 @@ contract DssChief is DSAuthority {
     }
 
     function lock(uint256 wad) external {
-        last[msg.sender] = block.number;
+        require(block.number == holdTrigger || block.number > holdTrigger + HOLD_SIZE, "DssChief/no-lock-during-hold");
+        last = block.number;
         gov.transferFrom(msg.sender, address(this), wad);
         deposits[msg.sender] = deposits[msg.sender] + wad;
         _addWeight(wad, votes[msg.sender]);
@@ -100,7 +106,6 @@ contract DssChief is DSAuthority {
     }
 
     function free(uint256 wad) external {
-        require(block.number > last[msg.sender], "DssChief/cant-free-same-block");
         deposits[msg.sender] = deposits[msg.sender] - wad;
         _subWeight(wad, votes[msg.sender]);
         gov.transfer(msg.sender, wad);
@@ -136,8 +141,16 @@ contract DssChief is DSAuthority {
         emit Vote(slate);
     }
 
+    function hold(address whom) external {
+        require(approvals[whom] > approvals[hat], "DssChief/no-reason-to-hold");
+        require(block.number >= holdTrigger + HOLD_SIZE + HOLD_COOLDOWN, "DssChief/cooldown-not-finished");
+        holdTrigger = block.number;
+        emit Hold(whom);
+    }
+
     function lift(address whom) external {
         require(approvals[whom] > approvals[hat], "DssChief/not-higher-current-hat");
+        require(block.number > last, "DssChief/cant-lift-same-block");
         hat = whom;
         emit Lift(whom);
     }
