@@ -92,6 +92,7 @@ contract DssChief is DSAuthority {
         require(live == 0, "DssChief/already-live");
         require(hat == address(0), "DssChief/not-address-zero");
         require(approvals[address(0)] >= launchThreshold, "DssChief/less-than-threshold");
+        require(block.number > last, "DssChief/cant-launch-same-block");
         live = 1;
         emit Launch();
     }
@@ -142,7 +143,7 @@ contract DssChief is DSAuthority {
     }
 
     function hold(address whom) external {
-        require(approvals[whom] > approvals[hat], "DssChief/no-reason-to-hold");
+        require(approvals[whom] > approvals[hat] || live == 0, "DssChief/no-reason-to-hold");
         require(block.number >= holdTrigger + HOLD_SIZE + HOLD_COOLDOWN, "DssChief/cooldown-not-finished");
         holdTrigger = block.number;
         emit Hold(whom);
