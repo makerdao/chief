@@ -32,8 +32,8 @@ interface GemLike {
 }
 
 contract DssChief is DSAuthority {
-    uint256 public live;
-    address public hat;
+    uint256                       public live;
+    address                       public hat;
     mapping(bytes32 => address[]) public slates;
     mapping(address => bytes32)   public votes;
     mapping(address => uint256)   public approvals;

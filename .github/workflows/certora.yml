@@ -8,6 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+          chief:
+            - chief
+            - chief-parametric
 
     steps:
       - name: Checkout
@@ -33,7 +37,7 @@ jobs:
       - name: Install Certora
         run: pip3 install certora-cli-beta
 
-      - name: Certora Chief
-        run: make certora-chief
+      - name: Verify ${{ matrix.chief }}
+        run: make certora-${{ matrix.chief }} results=1
         env:
           CERTORAKEY: ${{ secrets.CERTORAKEY }}
