@@ -58,12 +58,13 @@ candidate on their slate multiple times.
 `DssChief` provides the following public properties:
 
 - `live`: Indicates if the system is already active or not (1 == active, 0 == inactive).
-- `hat`: Contains the address of the current "chief."
+- `hat`: Contains the address of the current "chief".
 - `slates`: A mapping of `bytes32` to `address` arrays. Represents sets of candidates. Weighted votes are given to slates.
 - `votes`: A mapping of voter addresses to the slate they have voted for.
 - `approvals`: A mapping of candidate addresses to their `uint256` weight.
 - `deposits`: A mapping of voter addresses to `uint256` number of tokens locked.
-- `last`: A mapping of voter address to `uint256` representing the last block when `lock` was called.
+- `last`: A record representing the last block when `lock` was called.
+- `holdTrigger`: A record representing the last block when `hold` was called.
 - `gov`: `Token` used for voting.
 - `maxYays`: Maximum number of candidates a slate can hold.
 - `launchThreshold`: Initial amount to lock in `address(0)` for activating the `chief`.
@@ -75,12 +76,13 @@ The following events are triggered:
 - `Free(uint256 wad)`:  Fired when someone withdraws `gov` tokens.
 - `Etch(bytes32 indexed slate, address[] yays)`: Fired when a slate is created.
 - `Vote(bytes32 indexed slate)`: Fired when a slated is voted.
+- `Hold(address indexed whom)`: Fired when someone calls `hold`.
 - `Lift(address indexed whom)`: Fired when a new `hat` is elected.
 
 Its public functions are as follows:
 
 
-### `DssChief(DSToken gov_, uint maxYays_, launchThreshold_)`
+### `DssChief(address gov_, uint256 maxYays_, uint256 launchThreshold_)`
 
 The constructor.  Sets `gov`, `maxYays` and `launchThreshold`.
 
@@ -93,24 +95,23 @@ In this case, it will return true if the system is active and caller equals to `
 
 ### `launch()`
 
-Launches the system when the conditions are met (`approvals` on `address(0)` are >= `launchThreshold`).
+Launches the system when the conditions are met (`approvals` on `address(0)` are >= `launchThreshold` and there hasn't been a `lock` call previously done in the same block).
 
 
 ### `lock(uint256 wad)`
 
-Charges the user `wad` `GOV` tokens and adds `wad` weight to the candidates on the user's selected slate.
-Fires a `LogLockFree` event.
+Transfers from the user `wad` `gov` tokens and adds `wad` weight to the candidates on the user's selected slate.
+Requires to not be in a `hold` period in order to succeed.
 
 
 ### `free(uint256 wad)`
 
-Returns `wad` amount of `GOV` tokens to the user and subtracts `wad` weight from the candidates on the user's selected slate.
-Fires a `LogLockFree` event.
+Returns `wad` amount of `gov` tokens to the user and subtracts `wad` weight from the candidates on the user's selected slate.
 
 
 ### `etch(address[] yays) returns (bytes32 slate)`
 
-Save a set of ordered addresses and return a unique identifier for it.
+Save a set of ordered addresses and return a unique identifier (slate) for it.
 
 
 ### `vote(address[] yays) returns (bytes32 slate)`
@@ -124,8 +125,13 @@ current slate to the new slate, and returns the slate's identifier.
 Removes voter's weight from their current slate and adds it to the specified
 slate.
 
+### `hold(address whom)`
+
+Sets a new period where `lock` calls can't be made.
+In order to be called, requires to not be in a cooldown window and that there is a reason to execute it (a new `hat` can be elected or system is still inactive and potentially needs to be `launch`ed).
+
 
 ### `lift(address whom)`
 
-Checks the given address and promotes it to `chief` if it has more weight than
-the current chief.
+Checks the given address and promotes it as the `hat` of the `chief` if it has more weight than
+the current `hat`. Requires that there hasn't been a `lock` call previously done in the same block
