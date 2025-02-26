@@ -1,4 +1,4 @@
-# DssChief
+# Chief
 
 
 ## Summary
@@ -12,14 +12,14 @@ Voters lock up voting tokens to give their votes weight. The voting mechanism is
 
 Though anthropocentric language is used throughout this document when referring
 to the "chief," you should keep in mind that addresses can represent contracts
-as well as people. Thus, `dss-chief` works just as well as a method for selecting
+as well as people. Thus, `chief` works just as well as a method for selecting
 code for execution as it does for realizing political processes. For example,
-`dss-chief` could conceivably be used as a multisignature contract with
+`chief` could conceivably be used as a multisignature contract with
 token-weighted voting governing another set of smart contracts using `ds-auth`
 with `ds-roles`. In this scenario, "candidates" would consist of contracts
 mutating the state of the smart contract set under governance. Such a contract
 being elected "chief" would be granted all permissions to execute whatever
-changes necessary. `dss-chief` could also be used within such a contract
+changes necessary. `chief` could also be used within such a contract
 set in conjunction with a proxy contract like `ds-proxy` or a name resolution
 system like ENS for the purpose of voting in new versions of contracts.
 
@@ -33,12 +33,12 @@ first withdraw support from the candidate being replaced. Without this, moving
 approval to a new candidate could result in a less-approved candidate moving
 momentarily into the set of elected candidates.
 
-In the case of `dss-chief`, `n` is 1.
+In the case of `chief`, `n` is 1.
 
-In addition, `dss-chief` weights votes according to the quantity of a voting
-token they've chosen to lock up in the `DssChief` contract.
+In addition, `chief` weights votes according to the quantity of a voting
+token they've chosen to lock up in the `Chief` contract.
 
-It's important to note that the voting token used in a `dss-chief` deployment
+It's important to note that the voting token used in a `chief` deployment
 must be specified at the time of deployment and cannot be changed afterward.
 
 
@@ -55,7 +55,7 @@ candidate on their slate multiple times.
 
 ## APIs
 
-`DssChief` provides the following public properties:
+`Chief` provides the following public properties:
 
 - `live`: Indicates if the system is already active or not (1 == active, 0 == inactive).
 - `hat`: Contains the address of the current "chief".
@@ -82,7 +82,7 @@ The following events are triggered:
 Its public functions are as follows:
 
 
-### `DssChief(address gov_, uint256 maxYays_, uint256 launchThreshold_)`
+### `Chief(address gov_, uint256 maxYays_, uint256 launchThreshold_)`
 
 The constructor.  Sets `gov`, `maxYays` and `launchThreshold`.
 

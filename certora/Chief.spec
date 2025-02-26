@@ -1,4 +1,4 @@
-// DssChief.spec
+// Chief.spec
 
 using TokenMock as gov;
 using Auxiliar as aux;

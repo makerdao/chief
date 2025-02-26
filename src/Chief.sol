@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// DssChief.sol - select an authority by consensus
+// Chief.sol - select an authority by consensus
 
 // Copyright (C) 2017 DappHub, LLC
 // Copyright (C) 2023 Dai Foundation
@@ -31,7 +31,7 @@ interface GemLike {
     function transferFrom(address, address, uint256) external returns (bool);
 }
 
-contract DssChief is DSAuthority {
+contract Chief is DSAuthority {
     uint256                       public live;
     address                       public hat;
     mapping(bytes32 => address[]) public slates;
@@ -89,16 +89,16 @@ contract DssChief is DSAuthority {
     }
 
     function launch() external {
-        require(live == 0, "DssChief/already-live");
-        require(hat == address(0), "DssChief/not-address-zero");
-        require(approvals[address(0)] >= launchThreshold, "DssChief/less-than-threshold");
-        require(block.number > last, "DssChief/cant-launch-same-block");
+        require(live == 0, "Chief/already-live");
+        require(hat == address(0), "Chief/not-address-zero");
+        require(approvals[address(0)] >= launchThreshold, "Chief/less-than-threshold");
+        require(block.number > last, "Chief/cant-launch-same-block");
         live = 1;
         emit Launch();
     }
 
     function lock(uint256 wad) external {
-        require(block.number == holdTrigger || block.number > holdTrigger + HOLD_SIZE, "DssChief/no-lock-during-hold");
+        require(block.number == holdTrigger || block.number > holdTrigger + HOLD_SIZE, "Chief/no-lock-during-hold");
         last = block.number;
         gov.transferFrom(msg.sender, address(this), wad);
         deposits[msg.sender] = deposits[msg.sender] + wad;
@@ -114,11 +114,11 @@ contract DssChief is DSAuthority {
     }
 
     function etch(address[] calldata yays) public returns (bytes32 slate) {
-        require(yays.length <= maxYays, "DssChief/greater-max-yays");
+        require(yays.length <= maxYays, "Chief/greater-max-yays");
         if (yays.length > 1) {
             for (uint256 i = 0; i < yays.length - 1;) {
                 // strict inequality ensures both ordering and uniqueness
-                require(uint160(yays[i]) < uint160(yays[i+1]), "DssChief/yays-not-ordered");
+                require(uint160(yays[i]) < uint160(yays[i+1]), "Chief/yays-not-ordered");
                 unchecked { ++i; } // bounded by max array length
             }
         }
@@ -134,7 +134,7 @@ contract DssChief is DSAuthority {
     }
 
     function vote(bytes32 slate) public {
-        require(slates[slate].length > 0 || slate == EMPTY_SLATE, "DssChief/invalid-slate");
+        require(slates[slate].length > 0 || slate == EMPTY_SLATE, "Chief/invalid-slate");
         uint256 weight = deposits[msg.sender];
         _subWeight(weight, votes[msg.sender]);
         votes[msg.sender] = slate;
@@ -143,15 +143,15 @@ contract DssChief is DSAuthority {
     }
 
     function hold(address whom) external {
-        require(approvals[whom] > approvals[hat] || live == 0, "DssChief/no-reason-to-hold");
-        require(block.number >= holdTrigger + HOLD_SIZE + HOLD_COOLDOWN, "DssChief/cooldown-not-finished");
+        require(approvals[whom] > approvals[hat] || live == 0, "Chief/no-reason-to-hold");
+        require(block.number >= holdTrigger + HOLD_SIZE + HOLD_COOLDOWN, "Chief/cooldown-not-finished");
         holdTrigger = block.number;
         emit Hold(whom);
     }
 
     function lift(address whom) external {
-        require(approvals[whom] > approvals[hat], "DssChief/not-higher-current-hat");
-        require(block.number > last, "DssChief/cant-lift-same-block");
+        require(approvals[whom] > approvals[hat], "Chief/not-higher-current-hat");
+        require(block.number > last, "Chief/cant-lift-same-block");
         hat = whom;
         emit Lift(whom);
     }

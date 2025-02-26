@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// DssChief.t.sol - tests for DssChief.sol
+// Chief.t.sol - tests for Chief.sol
 
 // Copyright (C) 2017 DappHub, LLC
 // Copyright (C) 2023 Dai Foundation
@@ -22,10 +22,10 @@ pragma solidity ^0.8.16;
 
 import "forge-std/Test.sol";
 
-import "../src/DssChief.sol";
+import "../src/Chief.sol";
 import "./mocks/TokenMock.sol";
 
-contract DssChiefTest is Test {
+contract ChiefTest is Test {
     uint256 constant electionSize = 3;
 
     // c prefix: candidate
@@ -43,7 +43,7 @@ contract DssChiefTest is Test {
     uint256 constant uMediumInitialBalance = initialBalance / 4;
     uint256 constant uSmallInitialBalance = initialBalance / 5;
 
-    DssChief chief;
+    Chief chief;
     TokenMock gov;
 
     // u prefix: user
@@ -63,7 +63,7 @@ contract DssChiefTest is Test {
         gov = new TokenMock();
         gov.mint(address(this), initialBalance);
 
-        chief = new DssChief(address(gov), electionSize, 80_000 ether);
+        chief = new Chief(address(gov), electionSize, 80_000 ether);
 
         uLarge = address(123);
         uMedium = address(456);
@@ -127,7 +127,7 @@ contract DssChiefTest is Test {
         chief.launch();
         assertEq(chief.live(), 1);
 
-        vm.expectRevert("DssChief/already-live");
+        vm.expectRevert("Chief/already-live");
         chief.launch();
     }
 
@@ -144,7 +144,7 @@ contract DssChiefTest is Test {
         assertEq(chief.hat(), nonzero_address);
         assertTrue(!chief.canCall(nonzero_address, address(0), 0x00000000));
 
-        vm.expectRevert("DssChief/not-address-zero");
+        vm.expectRevert("Chief/not-address-zero");
         chief.launch();
         slate[0] = zero_address;
         chief.vote(slate);
@@ -164,7 +164,7 @@ contract DssChiefTest is Test {
         chief.lock(80000 ether - 1);
         chief.vote(slate);
 
-        vm.expectRevert("DssChief/less-than-threshold");
+        vm.expectRevert("Chief/less-than-threshold");
         chief.launch();
         chief.lock(1);
         vm.roll(block.number + 1);
@@ -180,7 +180,7 @@ contract DssChiefTest is Test {
         chief.lock(80000 ether);
         chief.vote(slate);
 
-        vm.expectRevert("DssChief/cant-launch-same-block");
+        vm.expectRevert("Chief/cant-launch-same-block");
         chief.launch();
         vm.roll(block.number + 1);
         chief.launch();
@@ -222,7 +222,7 @@ contract DssChiefTest is Test {
         candidates[2] = c3;
         candidates[3] = address(0xFFF);
 
-        vm.expectRevert("DssChief/greater-max-yays");
+        vm.expectRevert("Chief/greater-max-yays");
         vm.prank(uSmall);
         chief.etch(candidates);
     }
@@ -233,7 +233,7 @@ contract DssChiefTest is Test {
         candidates[1] = c1;
         candidates[2] = c3;
 
-        vm.expectRevert("DssChief/yays-not-ordered");
+        vm.expectRevert("Chief/yays-not-ordered");
         vm.prank(uSmall);
         chief.etch(candidates);
     }
@@ -269,7 +269,7 @@ contract DssChiefTest is Test {
         chief.vote(candidates);
         gov.approve(address(chief), uLargeLockedAmt);
         chief.lock(uLargeLockedAmt);
-        vm.expectRevert("DssChief/cant-lift-same-block");
+        vm.expectRevert("Chief/cant-lift-same-block");
         chief.lift(c1);
     }
 
@@ -383,7 +383,7 @@ contract DssChiefTest is Test {
         chief.vote(uLargeSlate);
 
         // Attempt to update the elected set.
-        vm.expectRevert("DssChief/not-higher-current-hat");
+        vm.expectRevert("Chief/not-higher-current-hat");
         chief.lift(c3);
     }
 
@@ -421,7 +421,7 @@ contract DssChiefTest is Test {
         address[] memory emptySlate = new address[](0);
         chief.vote(emptySlate);
 
-        vm.expectRevert("DssChief/invalid-slate");
+        vm.expectRevert("Chief/invalid-slate");
         chief.vote(bytes32(0x1010101010101010101010101010101010101010101010101010101010101010));
     }
 
@@ -441,7 +441,7 @@ contract DssChiefTest is Test {
 
         vm.prank(uLarge); chief.lock(80_001 ether);        // can lock
 
-        vm.expectRevert("DssChief/no-reason-to-hold");
+        vm.expectRevert("Chief/no-reason-to-hold");
         chief.hold(c1);
 
         address[] memory uLargeSlate = new address[](1);
@@ -453,37 +453,37 @@ contract DssChiefTest is Test {
         chief.hold(c1);                                    // can hold
         assertEq(chief.holdTrigger(), block.number);
         vm.prank(uLarge); chief.lock(10 ether);            // can still lock
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold again
+        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold again
         chief.hold(c1);
 
         // move to first block of the hold
         vm.roll(block.number + 1);
 
-        vm.expectRevert("DssChief/no-lock-during-hold");
+        vm.expectRevert("Chief/no-lock-during-hold");
         vm.prank(uLarge); chief.lock(10 ether);            // can not lock
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold
+        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold
         chief.hold(c1);
 
         // move to last block of the hold
         vm.roll(block.number + 4);
 
-        vm.expectRevert("DssChief/no-lock-during-hold");
+        vm.expectRevert("Chief/no-lock-during-hold");
         vm.prank(uLarge); chief.lock(10 ether);            // can not lock
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold
+        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold
         chief.hold(c1);
 
         // move to first block of the cooldown
         vm.roll(block.number + 1);
 
         vm.prank(uLarge); chief.lock(10 ether);            // can lock again
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold
+        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold
         chief.hold(c1);
 
         // move to last block of the cooldown
         vm.roll(block.number + 18);
 
         vm.prank(uLarge); chief.lock(10 ether);            // can still lock
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold
+        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold
         chief.hold(c1);
 
         // move to first block after the cooldown
@@ -493,15 +493,15 @@ contract DssChiefTest is Test {
         chief.hold(c1);                                    // can hold again
         assertEq(chief.holdTrigger(), block.number);
         vm.prank(uLarge); chief.lock(10 ether);            // can still lock
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold again
+        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold again
         chief.hold(c1);
 
         // move to first block of the new hold
         vm.roll(block.number + 1);
 
-        vm.expectRevert("DssChief/no-lock-during-hold");
+        vm.expectRevert("Chief/no-lock-during-hold");
         vm.prank(uLarge); chief.lock(10 ether);            // can not lock
-        vm.expectRevert("DssChief/cooldown-not-finished"); // can not hold
+        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold
         chief.hold(c1);
     }
 
