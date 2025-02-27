@@ -15,6 +15,7 @@ methods {
     function gov() external returns (address) envfree;
     function maxYays() external returns (uint256) envfree;
     function launchThreshold() external returns (uint256) envfree;
+    function EMPTY_SLATE() external returns (bytes32) envfree;
     function HOLD_SIZE() external returns (uint256) envfree;
     function HOLD_COOLDOWN() external returns (uint256) envfree;
     function length(bytes32) external returns (uint256) envfree;
@@ -645,6 +646,8 @@ rule vote_yays_revert(address[] yays) {
     mathint maxYays = maxYays();
     require maxYays == 5;
 
+    bytes32 EMPTY_SLATE = EMPTY_SLATE();
+
     mathint yaysLength = yays.length;
     bytes32 slateYays = yaysLength <= maxYays ? aux.hashYays(yays) : to_bytes32(0); // To avoid an error on something that won't be used
     require to_mathint(length(slateYays)) <= maxYays; // Not possible to have an existing array larger than maxYays, but still needed for the prover
@@ -700,11 +703,6 @@ rule vote_yays_revert(address[] yays) {
     require lengthVotesSender == yaysLength && yaysLength == 5 &&
             slatesVotesSender4 != yays[4]
             => votesSender != slateYays;
-    //
-
-    address[] emptyArr;
-    require(emptyArr.length == 0);
-    bytes32 emptySlate = aux.hashYays(emptyArr);
 
     vote@withrevert(e, yays);
 
@@ -714,7 +712,7 @@ rule vote_yays_revert(address[] yays) {
     bool revert4  = yaysLength >= 3 && yays[1] >= yays[2];
     bool revert5  = yaysLength >= 4 && yays[2] >= yays[3];
     bool revert6  = yaysLength == 5 && yays[3] >= yays[4];
-    bool revert7  = yaysLength == 0 && slateYays != emptySlate; // to_bytes32(0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470);
+    bool revert7  = yaysLength == 0 && slateYays != EMPTY_SLATE;
     bool revert8  = lengthVotesSender >= 1 && approvalsSlatesVotesSender0 < depositsSender;
     bool revert9  = lengthVotesSender >= 2 && approvalsSlatesVotesSender1 < depositsSender;
     bool revert10 = lengthVotesSender >= 3 && approvalsSlatesVotesSender2 < depositsSender;
@@ -921,6 +919,8 @@ rule vote_slate_revert(bytes32 slate) {
     mathint maxYays = maxYays();
     require maxYays == 5;
 
+    bytes32 EMPTY_SLATE = EMPTY_SLATE();
+
     bytes32 votesSender = votes(e.msg.sender);
     mathint lengthVotesSender = length(votesSender);
     require lengthVotesSender <= maxYays;
@@ -957,14 +957,10 @@ rule vote_slate_revert(bytes32 slate) {
     mathint approvalsSlatesSlate4 = approvals(slatesSlate4);
     mathint depositsSender = deposits(e.msg.sender);
 
-    address[] emptyArr;
-    require(emptyArr.length == 0);
-    bytes32 emptySlate = aux.hashYays(emptyArr);
-
     vote@withrevert(e, slate);
 
     bool revert1  = e.msg.value > 0;
-    bool revert2  = lengthSlate == 0 && slate != emptySlate; // to_bytes32(0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470);
+    bool revert2  = lengthSlate == 0 && slate != EMPTY_SLATE;
     bool revert3  = lengthVotesSender >= 1 && approvalsSlatesVotesSender0 < depositsSender;
     bool revert4  = lengthVotesSender >= 2 && approvalsSlatesVotesSender1 < depositsSender;
     bool revert5  = lengthVotesSender >= 3 && approvalsSlatesVotesSender2 < depositsSender;

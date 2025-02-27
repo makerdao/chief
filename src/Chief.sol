@@ -41,12 +41,11 @@ contract Chief is DSAuthority {
     uint256                       public last;
     uint256                       public holdTrigger;
 
-    bytes32 constant EMPTY_SLATE = keccak256(abi.encodePacked(new address[](0)));
-
     GemLike immutable public gov;
     uint256 immutable public maxYays;
     uint256 immutable public launchThreshold;
 
+    bytes32 public constant EMPTY_SLATE   = keccak256(abi.encodePacked(new address[](0)));
     uint256 public constant HOLD_SIZE     = 5;
     uint256 public constant HOLD_COOLDOWN = 20;
 
