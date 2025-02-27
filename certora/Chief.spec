@@ -95,6 +95,15 @@ rule storageAffected(method f) {
     assert govBalanceOfAfter != govBalanceOfBefore => f.selector == sig:lock(uint256).selector || f.selector == sig:free(uint256).selector, "Assert 9";
 }
 
+// Verify correct value of EMPTY_SLATE
+rule emptySlateGetter() {
+    address[] emptyArr;
+    require(emptyArr.length == 0);
+    bytes32 emptySlate = aux.hashYays(emptyArr);
+
+    assert EMPTY_SLATE() == emptySlate, "Assert 1";
+}
+
 // Verify correct behavior of old getters
 rule oldGetters() {
     assert authority() == currentContract, "Assert 1";
