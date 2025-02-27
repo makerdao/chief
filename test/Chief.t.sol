@@ -116,6 +116,33 @@ contract ChiefTest is Test {
         vm.stopPrank();
     }
 
+    function testOldGetters() public {
+        assertEq(chief.authority(), address(chief));
+        assertEq(chief.owner(), address(0));
+        assertEq(address(chief.GOV()), address(chief.gov()));
+        assertEq(chief.IOU(), address(0));
+        assertEq(chief.MAX_YAYS(), chief.maxYays());
+        assertEq(chief.LAUNCH_THRESHOLD(), chief.launchThreshold());
+    }
+
+    function testSlateLengthGetter() public {
+        address[] memory yays1 = new address[](1);
+        yays1[0] = address(1);
+        address[] memory yays2 = new address[](2);
+        yays2[0] = address(1);
+        yays2[1] = address(2);
+        address[] memory yays3 = new address[](3);
+        yays3[0] = address(1);
+        yays3[1] = address(2);
+        yays3[2] = address(3);
+        bytes32 slate1 = chief.etch(yays1);
+        bytes32 slate2 = chief.etch(yays2);
+        bytes32 slate3 = chief.etch(yays3);
+        assertEq(chief.length(slate1), 1);
+        assertEq(chief.length(slate2), 2);
+        assertEq(chief.length(slate3), 3);
+    }
+
     function testLaunchAlreadyLive() public {
         assertEq(chief.live(), 0);
         address[] memory slate = new address[](1);
@@ -133,31 +160,30 @@ contract ChiefTest is Test {
 
     function testLaunchHatNotZero() public {
         address[] memory slate = new address[](1);
-        address    zero_address = address(0);
-        address nonzero_address = address(1);
-        slate[0] = nonzero_address;
+        slate[0] = address(1);
         gov.approve(address(chief), 80000 ether);
         chief.lock(80000 ether);
         chief.vote(slate);
         vm.roll(block.number + 1);
-        chief.lift(nonzero_address);
-        assertEq(chief.hat(), nonzero_address);
-        assertTrue(!chief.canCall(nonzero_address, address(0), 0x00000000));
+        chief.lift(address(1));
+        assertEq(chief.hat(), address(1));
+        assertTrue(!chief.canCall(address(1), address(0), 0x00000000));
 
         vm.expectRevert("Chief/not-address-zero");
         chief.launch();
-        slate[0] = zero_address;
+        slate[0] = address(0);
         chief.vote(slate);
         vm.roll(block.number + 1);
-        chief.lift(zero_address);
-        assertEq(chief.hat(), zero_address);
-        assertTrue(!chief.canCall(zero_address, address(0), 0x00000000));
+        chief.lift(address(0));
+        assertEq(chief.hat(), address(0));
+        assertEq(chief.live(), 0);
+        assertTrue(!chief.canCall(address(0), address(0), 0x00000000));
         chief.launch();
-        assertTrue(chief.canCall(zero_address, address(0), 0x00000000));
+        assertEq(chief.live(), 1);
+        assertTrue(chief.canCall(address(0), address(0), 0x00000000));
     }
 
     function testLaunchBelowThreshold() public {
-        assertEq(chief.live(), 0);
         address[] memory slate = new address[](1);
         slate[0] = address(0);
         gov.approve(address(chief), 80_000 ether);
@@ -168,8 +194,12 @@ contract ChiefTest is Test {
         chief.launch();
         chief.lock(1);
         vm.roll(block.number + 1);
+        assertEq(chief.hat(), address(0));
+        assertEq(chief.live(), 0);
+        assertTrue(!chief.canCall(address(0), address(0), 0x00000000));
         chief.launch();
         assertEq(chief.live(), 1);
+        assertTrue(chief.canCall(address(0), address(0), 0x00000000));
     }
 
     function testLaunchLockInSameBlock() public {
