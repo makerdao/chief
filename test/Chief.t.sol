@@ -109,11 +109,11 @@ contract ChiefTest is Test {
         uMediumSlate[1] = c2;
         uMediumSlate[2] = c3;
         slateID = chief.vote(uMediumSlate);
+        vm.stopPrank();
 
         // Lift the chief
         vm.roll(block.number + 1);
         chief.lift(c1);
-        vm.stopPrank();
     }
 
     function testOldGetters() public {
@@ -235,6 +235,7 @@ contract ChiefTest is Test {
         vm.startPrank(uSmall);
         bytes32 id = chief.etch(candidates);
         chief.vote(id);
+        vm.stopPrank();
     }
 
     function testSizeOneSlate() public {
@@ -243,6 +244,7 @@ contract ChiefTest is Test {
         vm.startPrank(uSmall);
         bytes32 id = chief.etch(candidates);
         chief.vote(id);
+        vm.stopPrank();
     }
 
     function testEtchRequiresLessThanMaxYays() public {
@@ -275,6 +277,7 @@ contract ChiefTest is Test {
         vm.startPrank(uLarge);
         gov.approve(address(chief), lockedAmt);
         chief.lock(lockedAmt);
+        vm.stopPrank();
 
         assertTrue(gov.balanceOf(address(uLarge)) == uLargeInitialBalance - lockedAmt);
     }
@@ -287,6 +290,7 @@ contract ChiefTest is Test {
         chief.vote(candidates);
         gov.approve(address(chief), uLargeLockedAmt);
         chief.lock(uLargeLockedAmt);
+        vm.stopPrank();
         vm.roll(block.number + 1);
         chief.lift(c1);
     }
@@ -299,6 +303,7 @@ contract ChiefTest is Test {
         chief.vote(candidates);
         gov.approve(address(chief), uLargeLockedAmt);
         chief.lock(uLargeLockedAmt);
+        vm.stopPrank();
         vm.expectRevert("Chief/cant-lift-same-block");
         chief.lift(c1);
     }
@@ -324,6 +329,7 @@ contract ChiefTest is Test {
         uLargeLockedAmt = uLargeInitialBalance / 4;
         gov.approve(address(chief), uLargeLockedAmt);
         chief.lock(uLargeLockedAmt);
+        vm.stopPrank();
 
         assertTrue(chief.approvals(c1) == uLargeLockedAmt);
     }
@@ -341,6 +347,7 @@ contract ChiefTest is Test {
         address[] memory uLargeSlate = new address[](1);
         uLargeSlate[0] = c3;
         chief.vote(uLargeSlate);
+        vm.stopPrank();
     }
 
     function testAuthEnabledSystem() public {
@@ -370,6 +377,7 @@ contract ChiefTest is Test {
         address[] memory uLargeSlate = new address[](1);
         uLargeSlate[0] = c1;
         chief.vote(uLargeSlate);
+        vm.stopPrank();
 
         vm.roll(block.number + 1);
         chief.lift(c1);
@@ -392,6 +400,7 @@ contract ChiefTest is Test {
         vm.stopPrank();
         vm.startPrank(uMedium);
         chief.free(uMediumInitialBalance);
+        vm.stopPrank();
 
         vm.roll(block.number + 1);
         chief.lift(c3);
@@ -441,6 +450,7 @@ contract ChiefTest is Test {
         gov.approve(address(chief), uSmallInitialBalance);
         chief.lock(uSmallInitialBalance);
         chief.vote(slateID);
+        vm.stopPrank();
 
         // Update the elected set to reflect the restored order.
         vm.roll(block.number + 1);
