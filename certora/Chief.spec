@@ -19,10 +19,7 @@ methods {
     function HOLD_SIZE() external returns (uint256) envfree;
     function HOLD_COOLDOWN() external returns (uint256) envfree;
     function length(bytes32) external returns (uint256) envfree;
-    function authority() external returns (address) envfree;
-    function owner() external returns (address) envfree;
     function GOV() external returns (address) envfree;
-    function IOU() external returns (address) envfree;
     function MAX_YAYS() external returns (uint256) envfree;
     function LAUNCH_THRESHOLD() external returns (uint256) envfree;
     function gov.allowance(address, address) external returns (uint256) envfree;
@@ -106,12 +103,9 @@ rule emptySlateGetter() {
 
 // Verify correct behavior of old getters
 rule oldGetters() {
-    assert authority() == currentContract, "Assert 1";
-    assert owner() == 0, "Assert 2";
-    assert GOV() == gov(), "Assert 3";
-    assert IOU() == 0, "Assert 4";
-    assert MAX_YAYS() == maxYays(), "Assert 5";
-    assert LAUNCH_THRESHOLD() == launchThreshold(), "Assert 6";
+    assert GOV() == gov(), "Assert 1";
+    assert MAX_YAYS() == maxYays(), "Assert 2";
+    assert LAUNCH_THRESHOLD() == launchThreshold(), "Assert 3";
 }
 
 // Verify correct storage changes for non reverting launch

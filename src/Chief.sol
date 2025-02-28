@@ -157,20 +157,8 @@ contract Chief is DSAuthority {
 
     // Compatibility with old getters
 
-    function authority() external view returns (address) {
-        return address(this);
-    }
-
-    function owner() external pure returns (address) {
-        return address(0);
-    }
-
     function GOV() external view returns (address) {
         return address(gov);
-    }
-
-    function IOU() external pure returns (address) {
-        return address(0);
     }
 
     function MAX_YAYS() external view returns (uint256) {

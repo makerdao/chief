@@ -117,10 +117,7 @@ contract ChiefTest is Test {
     }
 
     function testOldGetters() public {
-        assertEq(chief.authority(), address(chief));
-        assertEq(chief.owner(), address(0));
         assertEq(address(chief.GOV()), address(chief.gov()));
-        assertEq(chief.IOU(), address(0));
         assertEq(chief.MAX_YAYS(), chief.maxYays());
         assertEq(chief.LAUNCH_THRESHOLD(), chief.launchThreshold());
     }
@@ -543,13 +540,5 @@ contract ChiefTest is Test {
         vm.prank(uLarge); chief.lock(10 ether);            // can not lock
         vm.expectRevert("Chief/cooldown-not-finished"); // can not hold
         chief.hold(c1);
-    }
-
-    function testChiefOwner() public {
-        assertEq(chief.owner(), address(0));
-    }
-
-    function testChiefAuthority() public {
-        assertEq(chief.authority(), address(chief));
     }
 }
