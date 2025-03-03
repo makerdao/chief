@@ -8,20 +8,6 @@ This contract provides a way to elect a "chief" contract via approval voting.
 Voters lock up voting tokens to give their votes weight. The voting mechanism is
 [approval voting](https://en.wikipedia.org/wiki/Approval_voting).
 
-## Note on Chiefs
-
-Though anthropocentric language is used throughout this document when referring
-to the "chief," you should keep in mind that addresses can represent contracts
-as well as people. Thus, `chief` works just as well as a method for selecting
-code for execution as it does for realizing political processes. For example,
-`chief` could conceivably be used as a multisignature contract with
-token-weighted voting governing another set of smart contracts using `ds-auth`
-with `ds-roles`. In this scenario, "candidates" would consist of contracts
-mutating the state of the smart contract set under governance. Such a contract
-being elected "chief" would be granted all permissions to execute whatever
-changes necessary. `chief` could also be used within such a contract
-set in conjunction with a proxy contract like `ds-proxy` or a name resolution
-system like ENS for the purpose of voting in new versions of contracts.
 
 ## Approval Voting
 
@@ -40,7 +26,6 @@ token they've chosen to lock up in the `Chief` contract.
 
 It's important to note that the voting token used in a `chief` deployment
 must be specified at the time of deployment and cannot be changed afterward.
-
 
 
 ## Notice for Client Implementations
