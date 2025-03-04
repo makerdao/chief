@@ -119,4 +119,4 @@ In order to be called, requires to not be in a cooldown window and that there is
 ### `lift(address whom)`
 
 Checks the given address and promotes it as the `hat` of the `chief` if it has more weight than
-the current `hat`. Requires that there hasn't been a `lock` call previously done in the same block
+the current `hat`. Requires that there hasn't been a `lock` call previously done in the same block.
