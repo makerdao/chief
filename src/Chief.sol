@@ -32,14 +32,14 @@ interface GemLike {
 }
 
 contract Chief is DSAuthority {
-    uint256                       public live;
-    address                       public hat;
-    mapping(bytes32 => address[]) public slates;
-    mapping(address => bytes32)   public votes;
-    mapping(address => uint256)   public approvals;
-    mapping(address => uint256)   public deposits;
-    uint256                       public last;
-    uint256                       public holdTrigger;
+    uint256                                  public live;
+    address                                  public hat;
+    mapping(bytes32 slate => address[] yays) public slates;
+    mapping(address usr   => bytes32 slate)  public votes;
+    mapping(address yay   => uint256 amt)    public approvals;
+    mapping(address usr   => uint256 amt)    public deposits;
+    uint256                                  public last;
+    uint256                                  public holdTrigger;
 
     GemLike public immutable gov;
     uint256 public immutable maxYays;
