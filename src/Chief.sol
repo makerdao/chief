@@ -27,8 +27,8 @@ interface DSAuthority {
 }
 
 interface GemLike {
-    function transfer(address, uint256) external returns (bool);
-    function transferFrom(address, address, uint256) external returns (bool);
+    function transfer(address, uint256) external;
+    function transferFrom(address, address, uint256) external;
 }
 
 contract Chief is DSAuthority {
