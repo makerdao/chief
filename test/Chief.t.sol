@@ -61,7 +61,7 @@ contract ChiefTest is Test {
 
     function setUp() public {
         gov = new TokenMock();
-        gov.mint(address(this), initialBalance);
+        deal(address(gov), address(this), initialBalance);
 
         chief = new Chief(address(gov), electionSize, 80_000 ether);
 

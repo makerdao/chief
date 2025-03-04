@@ -20,22 +20,17 @@
 pragma solidity ^0.8.21;
 
 contract TokenMock {
-    uint256 public totalSupply;
-
     mapping (address => uint256)                      public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
-    mapping (address => uint256)                      public nonces;
 
-    // --- ERC20 Mutations ---
     function transfer(address to, uint256 value) external returns (bool) {
         require(to != address(0) && to != address(this), "TokenMock/invalid-address");
         uint256 balance = balanceOf[msg.sender];
         require(balance >= value, "TokenMock/insufficient-balance");
 
-        unchecked {
-            balanceOf[msg.sender] = balance - value;
-        }
+        balanceOf[msg.sender] = balance - value;
         balanceOf[to] += value;
+
         return true;
     }
 
@@ -49,9 +44,7 @@ contract TokenMock {
             if (allowed != type(uint256).max) {
                 require(allowed >= value, "TokenMock/insufficient-allowance");
 
-                unchecked {
-                    allowance[from][msg.sender] = allowed - value;
-                }
+                allowance[from][msg.sender] = allowed - value;
             }
         }
 
@@ -65,11 +58,5 @@ contract TokenMock {
         allowance[msg.sender][spender] = value;
 
         return true;
-    }
-
-    function mint(address to, uint256 value) external {
-        require(to != address(0) && to != address(this), "TokenMock/invalid-address");
-        balanceOf[to] = balanceOf[to] + value;
-        totalSupply = totalSupply + value;
     }
 }
