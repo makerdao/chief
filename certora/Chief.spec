@@ -21,7 +21,6 @@ methods {
     function length(bytes32) external returns (uint256) envfree;
     function GOV() external returns (address) envfree;
     function MAX_YAYS() external returns (uint256) envfree;
-    function LAUNCH_THRESHOLD() external returns (uint256) envfree;
     function gov.allowance(address, address) external returns (uint256) envfree;
     function gov.balanceOf(address) external returns (uint256) envfree;
     function aux.hashYays(address[]) external returns (bytes32) envfree;
@@ -105,7 +104,6 @@ rule emptySlateGetter() {
 rule compatibilityGetters() {
     assert GOV() == gov(), "Assert 1";
     assert MAX_YAYS() == maxYays(), "Assert 2";
-    assert LAUNCH_THRESHOLD() == launchThreshold(), "Assert 3";
 }
 
 // Verify correct storage changes for non reverting launch

@@ -22,8 +22,8 @@ pragma solidity ^0.8.21;
 
 import "forge-std/Test.sol";
 
-import "../src/Chief.sol";
-import "./mocks/TokenMock.sol";
+import "src/Chief.sol";
+import "test/mocks/TokenMock.sol";
 
 contract ChiefTest is Test {
     uint256 constant electionSize = 3;
@@ -33,11 +33,6 @@ contract ChiefTest is Test {
     address constant c2 = address(0x2);
     address constant c3 = address(0x3);
     address constant c4 = address(0x4);
-    address constant c5 = address(0x5);
-    address constant c6 = address(0x6);
-    address constant c7 = address(0x7);
-    address constant c8 = address(0x8);
-    address constant c9 = address(0x9);
     uint256 constant initialBalance = 1_000_000 ether;
     uint256 constant uLargeInitialBalance = initialBalance / 3;
     uint256 constant uMediumInitialBalance = initialBalance / 4;
@@ -73,8 +68,8 @@ contract ChiefTest is Test {
         assertLt(uLargeInitialBalance, uMediumInitialBalance + uSmallInitialBalance);
 
         gov.transfer(uLarge, uLargeInitialBalance);
-        gov.transfer(address(uMedium), uMediumInitialBalance);
-        gov.transfer(address(uSmall), uSmallInitialBalance);
+        gov.transfer(uMedium, uMediumInitialBalance);
+        gov.transfer(uSmall, uSmallInitialBalance);
         vm.roll(1_000); // Block number = 1000
     }
 
@@ -117,7 +112,6 @@ contract ChiefTest is Test {
     function testCompatibilityGetters() public {
         assertEq(address(chief.GOV()), address(chief.gov()));
         assertEq(chief.MAX_YAYS(), chief.maxYays());
-        assertEq(chief.LAUNCH_THRESHOLD(), chief.launchThreshold());
     }
 
     function testSlateLengthGetter() public {
@@ -143,13 +137,7 @@ contract ChiefTest is Test {
 
     function testLaunchAlreadyLive() public {
         assertEq(chief.live(), 0);
-        address[] memory yays = new address[](1);
-        yays[0] = address(0);
-        gov.approve(address(chief), 80_000 ether);
-        chief.lock(80_000 ether);
-        chief.vote(yays);
-        vm.roll(block.number + 1);
-        chief.launch();
+        _enableSystem();
         assertEq(chief.live(), 1);
 
         vm.expectRevert("Chief/already-live");

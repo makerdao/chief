@@ -164,8 +164,4 @@ contract Chief is DSAuthority {
     function MAX_YAYS() external view returns (uint256) {
         return maxYays;
     }
-
-    function LAUNCH_THRESHOLD() external view returns (uint256) {
-        return launchThreshold;
-    }
 }
