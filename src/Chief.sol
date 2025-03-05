@@ -142,7 +142,8 @@ contract Chief is DSAuthority {
     }
 
     function hold(address whom) external {
-        require(approvals[whom] > approvals[hat] || live == 0, "Chief/no-reason-to-hold");
+        require(approvals[whom] > approvals[hat] ||
+                live == 0 && hat == address(0) && approvals[address(0)] >= launchThreshold, "Chief/no-reason-to-hold");
         require(block.number >= holdTrigger + HOLD_SIZE + HOLD_COOLDOWN, "Chief/cooldown-not-finished");
         holdTrigger = block.number;
         emit Hold(whom);

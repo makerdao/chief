@@ -1028,6 +1028,8 @@ rule hold_revert(address whom) {
     address hat = hat();
     mathint approvalsWhom = approvals(whom);
     mathint approvalsHat = approvals(hat);
+    mathint approvalsZero = approvals(0);
+    mathint launchThreshold = launchThreshold();
     mathint holdTrigger = holdTrigger();
     mathint HOLD_SIZE = HOLD_SIZE();
     mathint HOLD_COOLDOWN = HOLD_COOLDOWN();
@@ -1035,7 +1037,7 @@ rule hold_revert(address whom) {
     hold@withrevert(e, whom);
 
     bool revert1 = e.msg.value > 0;
-    bool revert2 = approvalsWhom <= approvalsHat && live != 0;
+    bool revert2 = approvalsWhom <= approvalsHat && (live != 0 || hat != 0 || approvalsZero < launchThreshold);
     bool revert3 = e.block.number < holdTrigger + HOLD_SIZE + HOLD_COOLDOWN;
 
     assert lastReverted <=> revert1 || revert2 || revert3, "Revert rules failed";

@@ -438,8 +438,8 @@ contract ChiefTest is Test {
     }
 
     function testVoteSlateEmptyAndNotEtched() public {
-        address[] memory emptySlate = new address[](0);
-        chief.vote(emptySlate);
+        address[] memory emptyYays = new address[](0);
+        chief.vote(emptyYays);
 
         vm.expectRevert("Chief/invalid-slate");
         chief.vote(0x1010101010101010101010101010101010101010101010101010101010101010);
@@ -448,6 +448,32 @@ contract ChiefTest is Test {
     function testHoldForLaunching() public {
         assertEq(chief.approvals(address(0)), chief.approvals(chief.hat()));
         assertEq(chief.holdTrigger(), 0);
+        assertEq(chief.hat(), address(0));
+        vm.expectRevert("Chief/no-reason-to-hold");
+        chief.hold(address(0));
+        address[] memory yays = new address[](1);
+        yays[0] = address(0);
+        gov.approve(address(chief), 80_000 ether);
+        chief.lock(80_000 ether - 1);
+        chief.vote(yays);
+        vm.expectRevert("Chief/no-reason-to-hold");
+        chief.hold(address(0));
+        chief.lock(1);
+        vm.startPrank(uLarge);
+        gov.approve(address(chief), type(uint256).max);
+        chief.lock(80_000 ether + 1);
+        yays[0] = address(1);
+        chief.vote(yays);
+        vm.roll(block.number + 1);
+        chief.lift(address(1));
+        assertEq(chief.hat(), address(1));
+        assertEq(chief.approvals(address(0)), chief.launchThreshold());
+        vm.expectRevert("Chief/no-reason-to-hold");
+        chief.hold(address(0));
+        chief.free(2);
+        chief.lift(address(0));
+        vm.stopPrank();
+        assertEq(chief.hat(), address(0));
         chief.hold(address(0));
         assertEq(chief.holdTrigger(), block.number);
     }
