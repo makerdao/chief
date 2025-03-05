@@ -102,7 +102,7 @@ rule emptySlateGetter() {
 }
 
 // Verify correct behavior of old getters
-rule oldGetters() {
+rule compatibilityGetters() {
     assert GOV() == gov(), "Assert 1";
     assert MAX_YAYS() == maxYays(), "Assert 2";
     assert LAUNCH_THRESHOLD() == launchThreshold(), "Assert 3";
