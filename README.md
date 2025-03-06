@@ -72,7 +72,7 @@ In this case, it will return true if the system is active and caller equals to `
 
 ### `launch()`
 
-Launches the system when the conditions are met (`approvals` on `address(0)` are >= `launchThreshold` and there hasn't been a `lock` call previously done in the same transaction).
+Launches the system when the conditions are met (`approvals` on `address(0)` are >= `launchThreshold`).
 
 
 ### `lock(uint256 wad)`
@@ -84,7 +84,7 @@ Requires to not be in a `hold` period in order to succeed.
 ### `free(uint256 wad)`
 
 Returns `wad` amount of `gov` tokens to the user and subtracts `wad` weight from the candidates on the user's selected slate.
-
+Requires that there hasn't been a `lock` call previously done in the same transaction.
 
 ### `etch(address[] yays) returns (bytes32 slate)`
 
@@ -106,4 +106,4 @@ slate.
 ### `lift(address whom)`
 
 Checks the given address and promotes it as the `hat` of the `chief` if it has more weight than
-the current `hat`. Requires that there hasn't been a `lock` call previously done in the same transaction.
+the current `hat`.

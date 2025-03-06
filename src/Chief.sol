@@ -91,9 +91,7 @@ contract Chief is DSAuthority {
     }
 
     function lock(uint256 wad) external {
-        assembly {
-            tstore(0, 1)
-        }
+        assembly { tstore(0, 1) }
         gov.transferFrom(msg.sender, address(this), wad);
         deposits[msg.sender] = deposits[msg.sender] + wad;
         _addWeight(wad, votes[msg.sender]);
