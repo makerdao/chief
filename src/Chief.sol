@@ -18,7 +18,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.26;
 
 interface DSAuthority {
     function canCall(
@@ -38,29 +38,37 @@ contract Chief is DSAuthority {
     mapping(address usr   => bytes32 slate)  public votes;
     mapping(address yay   => uint256 amt)    public approvals;
     mapping(address usr   => uint256 amt)    public deposits;
-    uint256                                  public last;
-    uint256                                  public holdTrigger;
 
     GemLike public immutable gov;
     uint256 public immutable maxYays;
     uint256 public immutable launchThreshold;
 
     bytes32 public constant EMPTY_SLATE   = keccak256(abi.encodePacked(new address[](0)));
-    uint256 public constant HOLD_SIZE     = 5;
-    uint256 public constant HOLD_COOLDOWN = 20;
 
     event Launch();
     event Lock(uint256 wad);
     event Free(uint256 wad);
     event Etch(bytes32 indexed slate, address[] yays);
     event Vote(bytes32 indexed slate);
-    event Hold(address indexed whom);
     event Lift(address indexed whom);
 
     constructor(address gov_, uint256 maxYays_, uint256 launchThreshold_) {
         gov = GemLike(gov_);
         maxYays = maxYays_;
         launchThreshold = launchThreshold_;
+    }
+
+    function _requireNotPrevLock() internal view {
+        assembly {
+            if tload(0) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
+                mstore(add(ptr, 0x04), 0x20)
+                mstore(add(ptr, 0x24), 26)
+                mstore(add(ptr, 0x44), "Chief/prev-lock-in-same-tx")
+                revert(ptr, 0x64)
+            }
+        }
     }
 
     function _addWeight(uint256 weight, bytes32 slate) internal {
@@ -91,14 +99,15 @@ contract Chief is DSAuthority {
         require(live == 0, "Chief/already-live");
         require(hat == address(0), "Chief/not-address-zero");
         require(approvals[address(0)] >= launchThreshold, "Chief/less-than-threshold");
-        require(block.number > last, "Chief/cant-launch-same-block");
+        _requireNotPrevLock();
         live = 1;
         emit Launch();
     }
 
     function lock(uint256 wad) external {
-        require(block.number == holdTrigger || block.number > holdTrigger + HOLD_SIZE, "Chief/no-lock-during-hold");
-        last = block.number;
+        assembly {
+            tstore(0, 1)
+        }
         gov.transferFrom(msg.sender, address(this), wad);
         deposits[msg.sender] = deposits[msg.sender] + wad;
         _addWeight(wad, votes[msg.sender]);
@@ -141,17 +150,9 @@ contract Chief is DSAuthority {
         emit Vote(slate);
     }
 
-    function hold(address whom) external {
-        require(approvals[whom] > approvals[hat] ||
-                live == 0 && hat == address(0) && approvals[address(0)] >= launchThreshold, "Chief/no-reason-to-hold");
-        require(block.number >= holdTrigger + HOLD_SIZE + HOLD_COOLDOWN, "Chief/cooldown-not-finished");
-        holdTrigger = block.number;
-        emit Hold(whom);
-    }
-
     function lift(address whom) external {
         require(approvals[whom] > approvals[hat], "Chief/not-higher-current-hat");
-        require(block.number > last, "Chief/cant-lift-same-block");
+        _requireNotPrevLock();
         hat = whom;
         emit Lift(whom);
     }

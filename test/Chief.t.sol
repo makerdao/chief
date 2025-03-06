@@ -18,7 +18,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
 
@@ -51,7 +51,6 @@ contract ChiefTest is Test {
     event Free(uint256 wad);
     event Etch(bytes32 indexed slate, address[] yays);
     event Vote(bytes32 indexed slate);
-    event Hold(address indexed whom);
     event Lift(address indexed whom);
 
     function setUp() public {
@@ -188,17 +187,21 @@ contract ChiefTest is Test {
         assertTrue(chief.canCall(address(0), address(0), bytes4(0)));
     }
 
-    function testLaunchLockInSameBlock() public {
+    function lockAndLaunch() external {
+        chief.lock(80_000 ether);
+        chief.launch();
+    }
+
+    function testLaunchLockInSameTx() public {
         assertEq(chief.live(), 0);
         address[] memory yays = new address[](1);
         yays[0] = address(0);
         gov.approve(address(chief), 80_000 ether);
-        chief.lock(80_000 ether);
         chief.vote(yays);
 
-        vm.expectRevert("Chief/cant-launch-same-block");
-        chief.launch();
-        vm.roll(block.number + 1);
+        vm.expectRevert("Chief/prev-lock-in-same-tx");
+        this.lockAndLaunch();
+        chief.lock(80_000 ether);
         chief.launch();
         assertEq(chief.live(), 1);
     }
@@ -273,18 +276,19 @@ contract ChiefTest is Test {
         vm.stopPrank();
     }
 
+    function lockAndLift() external {
+        chief.lock(100_000 ether);
+        chief.lift(c1);
+    }
+
     function testLiftAfterLock() public {
-        uint256 uLargeLockedAmt = uLargeInitialBalance / 2;
-        vm.startPrank(uLarge);
         address[] memory yays = new address[](1);
         yays[0] = c1;
         chief.vote(yays);
-        gov.approve(address(chief), uLargeLockedAmt);
-        chief.lock(uLargeLockedAmt);
-        vm.stopPrank();
-        vm.expectRevert("Chief/cant-lift-same-block");
-        chief.lift(c1);
-        vm.roll(block.number + 1);
+        gov.approve(address(chief), 100_000 ether);
+        vm.expectRevert("Chief/prev-lock-in-same-tx");
+        this.lockAndLift();
+        chief.lock(100_000 ether);
         chief.lift(c1);
     }
 
@@ -443,111 +447,5 @@ contract ChiefTest is Test {
 
         vm.expectRevert("Chief/invalid-slate");
         chief.vote(0x1010101010101010101010101010101010101010101010101010101010101010);
-    }
-
-    function testHoldForLaunching() public {
-        assertEq(chief.approvals(address(0)), chief.approvals(chief.hat()));
-        assertEq(chief.holdTrigger(), 0);
-        assertEq(chief.hat(), address(0));
-        vm.expectRevert("Chief/no-reason-to-hold");
-        chief.hold(address(0));
-        address[] memory yays = new address[](1);
-        yays[0] = address(0);
-        gov.approve(address(chief), 80_000 ether);
-        chief.lock(80_000 ether - 1);
-        chief.vote(yays);
-        vm.expectRevert("Chief/no-reason-to-hold");
-        chief.hold(address(0));
-        chief.lock(1);
-        vm.startPrank(uLarge);
-        gov.approve(address(chief), type(uint256).max);
-        chief.lock(80_000 ether + 1);
-        yays[0] = address(1);
-        chief.vote(yays);
-        vm.roll(block.number + 1);
-        chief.lift(address(1));
-        assertEq(chief.hat(), address(1));
-        assertEq(chief.approvals(address(0)), chief.launchThreshold());
-        vm.expectRevert("Chief/no-reason-to-hold");
-        chief.hold(address(0));
-        chief.free(2);
-        chief.lift(address(0));
-        vm.stopPrank();
-        assertEq(chief.hat(), address(0));
-        chief.hold(address(0));
-        assertEq(chief.holdTrigger(), block.number);
-    }
-
-    function testHoldForLifting() public {
-        _enableSystem();
-        vm.prank(uLarge); gov.approve(address(chief), type(uint256).max);
-
-        assertEq(gov.balanceOf(uLarge), uLargeInitialBalance);
-        assertEq(chief.holdTrigger(), 0);
-
-        vm.prank(uLarge); chief.lock(80_001 ether);     // can lock
-
-        vm.expectRevert("Chief/no-reason-to-hold");
-        chief.hold(c1);
-
-        address[] memory uLargeYays = new address[](1);
-        uLargeYays[0] = c1;
-        vm.prank(uLarge); chief.vote(uLargeYays);
-
-        vm.expectEmit();
-        emit Hold(c1);
-        chief.hold(c1);                                 // can hold
-        assertEq(chief.holdTrigger(), block.number);
-        vm.prank(uLarge); chief.lock(10 ether);         // can still lock
-        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold again
-        chief.hold(c1);
-
-        // move to first block of the hold
-        vm.roll(block.number + 1);
-
-        vm.expectRevert("Chief/no-lock-during-hold");
-        vm.prank(uLarge); chief.lock(10 ether);         // can not lock
-        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold
-        chief.hold(c1);
-
-        // move to last block of the hold
-        vm.roll(block.number + 4);
-
-        vm.expectRevert("Chief/no-lock-during-hold");
-        vm.prank(uLarge); chief.lock(10 ether);         // can not lock
-        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold
-        chief.hold(c1);
-
-        // move to first block of the cooldown
-        vm.roll(block.number + 1);
-
-        vm.prank(uLarge); chief.lock(10 ether);         // can lock again
-        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold
-        chief.hold(c1);
-
-        // move to last block of the cooldown
-        vm.roll(block.number + 18);
-
-        vm.prank(uLarge); chief.lock(10 ether);         // can still lock
-        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold
-        chief.hold(c1);
-
-        // move to first block after the cooldown
-        vm.roll(block.number + 1);
-
-        vm.prank(uLarge); chief.lock(10 ether);         // can lock
-        chief.hold(c1);                                 // can hold again
-        assertEq(chief.holdTrigger(), block.number);
-        vm.prank(uLarge); chief.lock(10 ether);         // can still lock
-        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold again
-        chief.hold(c1);
-
-        // move to first block of the new hold
-        vm.roll(block.number + 1);
-
-        vm.expectRevert("Chief/no-lock-during-hold");
-        vm.prank(uLarge); chief.lock(10 ether);         // can not lock
-        vm.expectRevert("Chief/cooldown-not-finished"); // can not hold
-        chief.hold(c1);
     }
 }

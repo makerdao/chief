@@ -10,20 +10,23 @@ methods {
     function votes(address) external returns (bytes32) envfree;
     function approvals(address) external returns (uint256) envfree;
     function deposits(address) external returns (uint256) envfree;
-    function last() external returns (uint256) envfree;
-    function holdTrigger() external returns (uint256) envfree;
     function gov() external returns (address) envfree;
     function maxYays() external returns (uint256) envfree;
     function launchThreshold() external returns (uint256) envfree;
     function EMPTY_SLATE() external returns (bytes32) envfree;
-    function HOLD_SIZE() external returns (uint256) envfree;
-    function HOLD_COOLDOWN() external returns (uint256) envfree;
     function length(bytes32) external returns (uint256) envfree;
     function GOV() external returns (address) envfree;
     function MAX_YAYS() external returns (uint256) envfree;
     function gov.allowance(address, address) external returns (uint256) envfree;
     function gov.balanceOf(address) external returns (uint256) envfree;
     function aux.hashYays(address[]) external returns (bytes32) envfree;
+}
+
+persistent ghost uint256 prevLock;
+hook ALL_TLOAD(uint256 slot) uint256 val {
+    if (slot == 0) {
+        prevLock = val;
+    }
 }
 
 // Verify no more entry points exist
@@ -42,7 +45,6 @@ rule entryPoints(method f) filtered { f -> !f.isView } {
            f.selector == sig:etch(address[]).selector ||
            f.selector == sig:vote(address[]).selector ||
            f.selector == sig:vote(bytes32).selector ||
-           f.selector == sig:hold(address).selector ||
            f.selector == sig:lift(address).selector;
 }
 
@@ -63,8 +65,6 @@ rule storageAffected(method f) {
     bytes32 votesBefore = votes(anyAddr);
     mathint approvalsBefore = approvals(anyAddr);
     mathint depositsBefore = deposits(anyAddr);
-    mathint lastBefore = last();
-    mathint holdTriggerBefore = holdTrigger();
     mathint govBalanceOfBefore = gov.balanceOf(anyAddr);
 
     calldataarg args;
@@ -76,8 +76,6 @@ rule storageAffected(method f) {
     bytes32 votesAfter = votes(anyAddr);
     mathint approvalsAfter = approvals(anyAddr);
     mathint depositsAfter = deposits(anyAddr);
-    mathint lastAfter = last();
-    mathint holdTriggerAfter = holdTrigger();
     mathint govBalanceOfAfter = gov.balanceOf(anyAddr);
 
     assert liveAfter != liveBefore => f.selector == sig:launch().selector, "Assert 1";
@@ -86,9 +84,7 @@ rule storageAffected(method f) {
     assert votesAfter != votesBefore => f.selector == sig:vote(address[]).selector || f.selector == sig:vote(bytes32).selector, "Assert 4";
     assert approvalsAfter != approvalsBefore => f.selector == sig:lock(uint256).selector || f.selector == sig:free(uint256).selector || f.selector == sig:vote(address[]).selector || f.selector == sig:vote(bytes32).selector, "Assert 5";
     assert depositsAfter != depositsBefore => f.selector == sig:lock(uint256).selector || f.selector == sig:free(uint256).selector, "Assert 6";
-    assert lastAfter != lastBefore => f.selector == sig:lock(uint256).selector, "Assert 7";
-    assert holdTriggerAfter != holdTriggerBefore => f.selector == sig:hold(address).selector, "Assert 8";
-    assert govBalanceOfAfter != govBalanceOfBefore => f.selector == sig:lock(uint256).selector || f.selector == sig:free(uint256).selector, "Assert 9";
+    assert govBalanceOfAfter != govBalanceOfBefore => f.selector == sig:lock(uint256).selector || f.selector == sig:free(uint256).selector, "Assert 7";
 }
 
 // Verify correct value of EMPTY_SLATE
@@ -124,7 +120,6 @@ rule launch_revert() {
     mathint live = live();
     address hat = hat();
     mathint approvalsAddr0 = approvals(0);
-    mathint last = last();
     mathint launchThreshold = launchThreshold();
 
     launch@withrevert(e);
@@ -133,7 +128,7 @@ rule launch_revert() {
     bool revert2 = live != 0;
     bool revert3 = hat != 0;
     bool revert4 = approvalsAddr0 < launchThreshold;
-    bool revert5 = e.block.number <= last;
+    bool revert5 = prevLock != 0;
 
     assert lastReverted <=> revert1 || revert2 || revert3 ||
                             revert4 || revert5, "Revert rules failed";
@@ -195,7 +190,6 @@ rule lock(uint256 wad) {
     mathint approvalsSlatesNotSenderAnyAfter = approvals(slatessNotSenderAny);
     mathint depositsSenderAfter = deposits(e.msg.sender);
     mathint depositsOtherAfter = deposits(otherAddr);
-    mathint lastAfter = last();
     mathint govBalanceOfSenderAfter = gov.balanceOf(e.msg.sender);
     mathint govBalanceOfChiefAfter = gov.balanceOf(currentContract);
     mathint govBalanceOfOtherAfter = gov.balanceOf(otherAddr2);
@@ -208,10 +202,9 @@ rule lock(uint256 wad) {
     assert approvalsSlatesNotSenderAnyAfter == approvalsSlatesNotSenderAnyBefore, "Assert 6";
     assert depositsSenderAfter == depositsSenderBefore + wad, "Assert 7";
     assert depositsOtherAfter == depositsOtherBefore, "Assert 8";
-    assert lastAfter == to_mathint(e.block.number), "Assert 9";
-    assert govBalanceOfSenderAfter == govBalanceOfSenderBefore - wad, "Assert 10";
-    assert govBalanceOfChiefAfter == govBalanceOfChiefBefore + wad, "Assert 11";
-    assert govBalanceOfOtherAfter == govBalanceOfOtherBefore, "Assert 12";
+    assert govBalanceOfSenderAfter == govBalanceOfSenderBefore - wad, "Assert 9";
+    assert govBalanceOfChiefAfter == govBalanceOfChiefBefore + wad, "Assert 10";
+    assert govBalanceOfOtherAfter == govBalanceOfOtherBefore, "Assert 11";
 }
 
 // Verify revert rules on lock
@@ -228,8 +221,6 @@ rule lock_revert(uint256 wad) {
     bytes32 votesSender = votes(e.msg.sender);
     mathint lengthVotesSender = length(votesSender);
     require lengthVotesSender <= maxYays;
-    mathint holdTrigger = holdTrigger();
-    mathint HOLD_SIZE = HOLD_SIZE();
     address addr0 = 0;
     address slatesVotesSender0 = lengthVotesSender >= 1 ? slates(votesSender, 0) : addr0; // Just any address as placeholder
     address slatesVotesSender1 = lengthVotesSender >= 2 ? slates(votesSender, 1) : addr0;
@@ -249,17 +240,16 @@ rule lock_revert(uint256 wad) {
     lock@withrevert(e, wad);
 
     bool revert1 = e.msg.value > 0;
-    bool revert2 = e.block.number != holdTrigger && e.block.number <= holdTrigger + HOLD_SIZE;
-    bool revert3 = depositsSender + wad > max_uint256;
-    bool revert4 = lengthVotesSender >= 1 && approvalsSlatesVotesSender0 + wad > max_uint256;
-    bool revert5 = lengthVotesSender >= 2 && approvalsSlatesVotesSender1 + wad > max_uint256;
-    bool revert6 = lengthVotesSender >= 3 && approvalsSlatesVotesSender2 + wad > max_uint256;
-    bool revert7 = lengthVotesSender >= 4 && approvalsSlatesVotesSender3 + wad > max_uint256;
-    bool revert8 = lengthVotesSender == 5 && approvalsSlatesVotesSender4 + wad > max_uint256;
+    bool revert2 = depositsSender + wad > max_uint256;
+    bool revert3 = lengthVotesSender >= 1 && approvalsSlatesVotesSender0 + wad > max_uint256;
+    bool revert4 = lengthVotesSender >= 2 && approvalsSlatesVotesSender1 + wad > max_uint256;
+    bool revert5 = lengthVotesSender >= 3 && approvalsSlatesVotesSender2 + wad > max_uint256;
+    bool revert6 = lengthVotesSender >= 4 && approvalsSlatesVotesSender3 + wad > max_uint256;
+    bool revert7 = lengthVotesSender == 5 && approvalsSlatesVotesSender4 + wad > max_uint256;
 
     assert lastReverted <=> revert1 || revert2 || revert3 ||
                             revert4 || revert5 || revert6 ||
-                            revert7 || revert8, "Revert rules failed";
+                            revert7, "Revert rules failed";
 }
 
 // Verify correct storage changes for non reverting free
@@ -304,7 +294,6 @@ rule free(uint256 wad) {
     mathint approvalsSlatesVotesNotSenderAnyBefore = approvals(slatesNotSenderAny);
     mathint depositsSenderBefore = deposits(e.msg.sender);
     mathint depositsOtherBefore = deposits(otherAddr);
-    mathint lastBefore = last();
     mathint govBalanceOfSenderBefore = gov.balanceOf(e.msg.sender);
     mathint govBalanceOfChiefBefore = gov.balanceOf(currentContract);
     mathint govBalanceOfOtherBefore = gov.balanceOf(otherAddr2);
@@ -319,7 +308,6 @@ rule free(uint256 wad) {
     mathint approvalsSlatesVotesNotSenderAnyAfter = approvals(slatesNotSenderAny);
     mathint depositsSenderAfter = deposits(e.msg.sender);
     mathint depositsOtherAfter = deposits(otherAddr);
-    mathint lastAfter = last();
     mathint govBalanceOfSenderAfter = gov.balanceOf(e.msg.sender);
     mathint govBalanceOfChiefAfter = gov.balanceOf(currentContract);
     mathint govBalanceOfOtherAfter = gov.balanceOf(otherAddr2);
@@ -332,10 +320,9 @@ rule free(uint256 wad) {
     assert approvalsSlatesVotesNotSenderAnyAfter == approvalsSlatesVotesNotSenderAnyBefore, "Assert 6";
     assert depositsSenderAfter == depositsSenderBefore - wad, "Assert 7";
     assert depositsOtherAfter == depositsOtherBefore, "Assert 8";
-    assert lastAfter == lastBefore, "Assert 9";
-    assert govBalanceOfSenderAfter == govBalanceOfSenderBefore + wad, "Assert 10";
-    assert govBalanceOfChiefAfter == govBalanceOfChiefBefore - wad, "Assert 11";
-    assert govBalanceOfOtherAfter == govBalanceOfOtherBefore, "Assert 12";
+    assert govBalanceOfSenderAfter == govBalanceOfSenderBefore + wad, "Assert 9";
+    assert govBalanceOfChiefAfter == govBalanceOfChiefBefore - wad, "Assert 10";
+    assert govBalanceOfOtherAfter == govBalanceOfOtherBefore, "Assert 11";
 }
 
 // Verify revert rules on free
@@ -1009,40 +996,6 @@ rule vote_slate_revert(bytes32 slate) {
                             revert10 || revert11 || revert12, "Revert rules failed";
 }
 
-// Verify correct storage changes for non reverting hold
-rule hold(address whom) {
-    env e;
-
-    hold(e, whom);
-
-    mathint holdTriggerAfter = holdTrigger();
-
-    assert holdTriggerAfter == e.block.number, "Assert 1";
-}
-
-// Verify revert rules on hold
-rule hold_revert(address whom) {
-    env e;
-
-    mathint live = live();
-    address hat = hat();
-    mathint approvalsWhom = approvals(whom);
-    mathint approvalsHat = approvals(hat);
-    mathint approvalsZero = approvals(0);
-    mathint launchThreshold = launchThreshold();
-    mathint holdTrigger = holdTrigger();
-    mathint HOLD_SIZE = HOLD_SIZE();
-    mathint HOLD_COOLDOWN = HOLD_COOLDOWN();
-
-    hold@withrevert(e, whom);
-
-    bool revert1 = e.msg.value > 0;
-    bool revert2 = approvalsWhom <= approvalsHat && (live != 0 || hat != 0 || approvalsZero < launchThreshold);
-    bool revert3 = e.block.number < holdTrigger + HOLD_SIZE + HOLD_COOLDOWN;
-
-    assert lastReverted <=> revert1 || revert2 || revert3, "Revert rules failed";
-}
-
 // Verify correct storage changes for non reverting lift
 rule lift(address whom) {
     env e;
@@ -1061,13 +1014,12 @@ rule lift_revert(address whom) {
     address hat = hat();
     mathint approvalsWhom = approvals(whom);
     mathint approvalsHat = approvals(hat);
-    mathint last = last();
 
     lift@withrevert(e, whom);
 
     bool revert1 = e.msg.value > 0;
     bool revert2 = approvalsWhom <= approvalsHat;
-    bool revert3 = e.block.number <= last;
+    bool revert3 = prevLock != 0;
 
     assert lastReverted <=> revert1 || revert2 || revert3, "Revert rules failed";
 }
