@@ -48,7 +48,6 @@ candidate on their slate multiple times.
 - `votes`: A mapping of voter addresses to the slate they have voted for.
 - `approvals`: A mapping of candidate addresses to their `uint256` weight.
 - `deposits`: A mapping of voter addresses to `uint256` number of tokens locked.
-- `last`: A record representing the last block when `lock` was called.
 - `gov`: `Token` used for voting.
 - `maxYays`: Maximum number of candidates a slate can hold.
 - `launchThreshold`: Initial amount to lock in `address(0)` for activating the `chief`.
