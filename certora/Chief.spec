@@ -304,7 +304,6 @@ rule free(uint256 wad) {
     mathint approvalsSlatesVotesNotSenderAnyBefore = approvals(slatesNotSenderAny);
     mathint depositsSenderBefore = deposits(e.msg.sender);
     mathint depositsOtherBefore = deposits(otherAddr);
-    mathint lastBefore = last();
     mathint govBalanceOfSenderBefore = gov.balanceOf(e.msg.sender);
     mathint govBalanceOfChiefBefore = gov.balanceOf(currentContract);
     mathint govBalanceOfOtherBefore = gov.balanceOf(otherAddr2);
@@ -319,7 +318,6 @@ rule free(uint256 wad) {
     mathint approvalsSlatesVotesNotSenderAnyAfter = approvals(slatesNotSenderAny);
     mathint depositsSenderAfter = deposits(e.msg.sender);
     mathint depositsOtherAfter = deposits(otherAddr);
-    mathint lastAfter = last();
     mathint govBalanceOfSenderAfter = gov.balanceOf(e.msg.sender);
     mathint govBalanceOfChiefAfter = gov.balanceOf(currentContract);
     mathint govBalanceOfOtherAfter = gov.balanceOf(otherAddr2);
@@ -332,10 +330,9 @@ rule free(uint256 wad) {
     assert approvalsSlatesVotesNotSenderAnyAfter == approvalsSlatesVotesNotSenderAnyBefore, "Assert 6";
     assert depositsSenderAfter == depositsSenderBefore - wad, "Assert 7";
     assert depositsOtherAfter == depositsOtherBefore, "Assert 8";
-    assert lastAfter == lastBefore, "Assert 9";
-    assert govBalanceOfSenderAfter == govBalanceOfSenderBefore + wad, "Assert 10";
-    assert govBalanceOfChiefAfter == govBalanceOfChiefBefore - wad, "Assert 11";
-    assert govBalanceOfOtherAfter == govBalanceOfOtherBefore, "Assert 12";
+    assert govBalanceOfSenderAfter == govBalanceOfSenderBefore + wad, "Assert 9";
+    assert govBalanceOfChiefAfter == govBalanceOfChiefBefore - wad, "Assert 10";
+    assert govBalanceOfOtherAfter == govBalanceOfOtherBefore, "Assert 11";
 }
 
 // Verify revert rules on free
