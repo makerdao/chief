@@ -128,10 +128,9 @@ rule launch_revert() {
     bool revert2 = live != 0;
     bool revert3 = hat != 0;
     bool revert4 = approvalsAddr0 < launchThreshold;
-    bool revert5 = prevLock != 0;
 
     assert lastReverted <=> revert1 || revert2 || revert3 ||
-                            revert4 || revert5, "Revert rules failed";
+                            revert4, "Revert rules failed";
 }
 
 // Verify correct storage changes for non reverting lock
@@ -358,16 +357,17 @@ rule free_revert(uint256 wad) {
     free@withrevert(e, wad);
 
     bool revert1 = e.msg.value > 0;
-    bool revert2 = depositsSender < to_mathint(wad);
-    bool revert3 = lengthVotesSender >= 1 && approvalsSlatesVotesSender0 < to_mathint(wad);
-    bool revert4 = lengthVotesSender >= 2 && approvalsSlatesVotesSender1 < to_mathint(wad);
-    bool revert5 = lengthVotesSender >= 3 && approvalsSlatesVotesSender2 < to_mathint(wad);
-    bool revert6 = lengthVotesSender >= 4 && approvalsSlatesVotesSender3 < to_mathint(wad);
-    bool revert7 = lengthVotesSender == 5 && approvalsSlatesVotesSender4 < to_mathint(wad);
+    bool revert2 = prevLock != 0;
+    bool revert3 = depositsSender < to_mathint(wad);
+    bool revert4 = lengthVotesSender >= 1 && approvalsSlatesVotesSender0 < to_mathint(wad);
+    bool revert5 = lengthVotesSender >= 2 && approvalsSlatesVotesSender1 < to_mathint(wad);
+    bool revert6 = lengthVotesSender >= 3 && approvalsSlatesVotesSender2 < to_mathint(wad);
+    bool revert7 = lengthVotesSender >= 4 && approvalsSlatesVotesSender3 < to_mathint(wad);
+    bool revert8 = lengthVotesSender == 5 && approvalsSlatesVotesSender4 < to_mathint(wad);
 
     assert lastReverted <=> revert1 || revert2 || revert3 ||
                             revert4 || revert5 || revert6 ||
-                            revert7, "Revert rules failed";
+                            revert7 || revert8, "Revert rules failed";
 }
 
 // Verify correct storage changes for non reverting etch
@@ -1019,7 +1019,6 @@ rule lift_revert(address whom) {
 
     bool revert1 = e.msg.value > 0;
     bool revert2 = approvalsWhom <= approvalsHat;
-    bool revert3 = prevLock != 0;
 
-    assert lastReverted <=> revert1 || revert2 || revert3, "Revert rules failed";
+    assert lastReverted <=> revert1 || revert2, "Revert rules failed";
 }

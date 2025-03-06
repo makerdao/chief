@@ -187,25 +187,6 @@ contract ChiefTest is Test {
         assertTrue(chief.canCall(address(0), address(0), bytes4(0)));
     }
 
-    function lockAndLaunch() external {
-        chief.lock(80_000 ether);
-        chief.launch();
-    }
-
-    function testLaunchLockInSameTx() public {
-        assertEq(chief.live(), 0);
-        address[] memory yays = new address[](1);
-        yays[0] = address(0);
-        gov.approve(address(chief), 80_000 ether);
-        chief.vote(yays);
-
-        vm.expectRevert("Chief/prev-lock-in-same-tx");
-        this.lockAndLaunch();
-        chief.lock(80_000 ether);
-        chief.launch();
-        assertEq(chief.live(), 1);
-    }
-
     function testEtchReturnsSameSlateForSameYays() public {
         address[] memory yays = new address[](3);
         yays[0] = c1;
@@ -276,20 +257,16 @@ contract ChiefTest is Test {
         vm.stopPrank();
     }
 
-    function lockAndLift() external {
-        chief.lock(100_000 ether);
-        chief.lift(c1);
+    function lockAndFree() external {
+        chief.lock(80_000 ether);
+        chief.free(40_000 ether);
     }
-
-    function testLiftAfterLock() public {
-        address[] memory yays = new address[](1);
-        yays[0] = c1;
-        chief.vote(yays);
-        gov.approve(address(chief), 100_000 ether);
+    function testLockAndFreeInSameTx() public {
+        gov.approve(address(chief), 80_000 ether);
         vm.expectRevert("Chief/prev-lock-in-same-tx");
-        this.lockAndLift();
-        chief.lock(100_000 ether);
-        chief.lift(c1);
+        this.lockAndFree();
+        chief.lock(80_000 ether);
+        chief.free(40_000 ether);
     }
 
     function testChangingWeightAfterVoting() public {
