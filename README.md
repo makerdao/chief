@@ -64,11 +64,6 @@ The following events are triggered:
 Its public functions are as follows:
 
 
-### `Chief(address gov_, uint256 maxYays_, uint256 launchThreshold_)`
-
-The constructor.  Sets `gov`, `maxYays` and `launchThreshold`.
-
-
 ### `canCall(address caller, address, bytes4) external view returns (bool ok)`
 
 It is the function that will be used by other contracts to verify if caller can execute an action.
