@@ -58,17 +58,12 @@ contract Chief is DSAuthority {
         launchThreshold = launchThreshold_;
     }
 
-    function _requireNotPrevLock() internal view {
+    function _prevLock() internal view returns (bool) {
+        bool prevLock;
         assembly {
-            if tload(0) {
-                let ptr := mload(0x40)
-                mstore(ptr, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-                mstore(add(ptr, 0x04), 0x20)
-                mstore(add(ptr, 0x24), 26)
-                mstore(add(ptr, 0x44), "Chief/prev-lock-in-same-tx")
-                revert(ptr, 0x64)
-            }
+            prevLock := tload(0)
         }
+        return prevLock;
     }
 
     function _addWeight(uint256 weight, bytes32 slate) internal {
@@ -99,7 +94,7 @@ contract Chief is DSAuthority {
         require(live == 0, "Chief/already-live");
         require(hat == address(0), "Chief/not-address-zero");
         require(approvals[address(0)] >= launchThreshold, "Chief/less-than-threshold");
-        _requireNotPrevLock();
+        require(!_prevLock(), "Chief/prev-lock-in-same-tx");
         live = 1;
         emit Launch();
     }
@@ -152,7 +147,7 @@ contract Chief is DSAuthority {
 
     function lift(address whom) external {
         require(approvals[whom] > approvals[hat], "Chief/not-higher-current-hat");
-        _requireNotPrevLock();
+        require(!_prevLock(), "Chief/prev-lock-in-same-tx");
         hat = whom;
         emit Lift(whom);
     }
