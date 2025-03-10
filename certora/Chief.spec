@@ -22,11 +22,9 @@ methods {
     function aux.hashYays(address[]) external returns (bytes32) envfree;
 }
 
-persistent ghost uint256 prevLock;
+persistent ghost mapping(mathint => mathint) prevLock;
 hook ALL_TLOAD(uint256 slot) uint256 val {
-    if (slot == 0) {
-        prevLock = val;
-    }
+    prevLock[slot] = val;
 }
 
 // Verify no more entry points exist
@@ -357,7 +355,7 @@ rule free_revert(uint256 wad) {
     free@withrevert(e, wad);
 
     bool revert1 = e.msg.value > 0;
-    bool revert2 = prevLock != 0;
+    bool revert2 = prevLock[to_mathint(e.msg.sender)] != 0;
     bool revert3 = depositsSender < to_mathint(wad);
     bool revert4 = lengthVotesSender >= 1 && approvalsSlatesVotesSender0 < to_mathint(wad);
     bool revert5 = lengthVotesSender >= 2 && approvalsSlatesVotesSender1 < to_mathint(wad);
