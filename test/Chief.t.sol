@@ -25,6 +25,25 @@ import "forge-std/Test.sol";
 import "src/Chief.sol";
 import "test/mocks/TokenMock.sol";
 
+contract VoteProxy {
+    Chief chief;
+
+    constructor(Chief chief_) {
+        chief = chief_;
+        TokenMock(address(chief.gov())).approve(address(chief), type(uint256).max);
+    }
+
+    function lock(uint256 wad) external {
+        chief.gov().transferFrom(msg.sender, address(this), wad);
+        chief.lock(wad);
+    }
+
+    function free(uint256 wad) external {
+        chief.free(wad);
+        chief.gov().transfer(msg.sender, wad);
+    }
+}
+
 contract ChiefTest is Test {
     uint256 constant electionSize = 3;
 
@@ -261,6 +280,19 @@ contract ChiefTest is Test {
         this.lockAndFree();
         chief.lock(80_000 ether);
         chief.free(40_000 ether);
+    }
+
+    function lockAndFreeDifferent(VoteProxy vote1, VoteProxy vote2) external {
+        vote2.lock(80_000 ether);
+        vote1.free(40_000 ether);
+    }
+    function testLockAndFreeDifferent() external {
+        VoteProxy vote1 = new VoteProxy(chief);
+        VoteProxy vote2 = new VoteProxy(chief);
+        gov.approve(address(vote1), type(uint256).max);
+        gov.approve(address(vote2), type(uint256).max);
+        vote1.lock(80_000 ether);
+        this.lockAndFreeDifferent(vote1, vote2);
     }
 
     function testChangingWeightAfterVoting() public {

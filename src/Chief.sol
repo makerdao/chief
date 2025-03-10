@@ -91,7 +91,7 @@ contract Chief is DSAuthority {
     }
 
     function lock(uint256 wad) external {
-        assembly { tstore(0, 1) }
+        assembly { tstore(caller(), 1) }
         gov.transferFrom(msg.sender, address(this), wad);
         deposits[msg.sender] = deposits[msg.sender] + wad;
         _addWeight(wad, votes[msg.sender]);
@@ -99,7 +99,7 @@ contract Chief is DSAuthority {
     }
 
     function free(uint256 wad) external {
-        bool prevLock; assembly { prevLock := tload(0) }
+        bool prevLock; assembly { prevLock := tload(caller()) }
         require(!prevLock, "Chief/prev-lock-in-same-tx");
         deposits[msg.sender] = deposits[msg.sender] - wad;
         _subWeight(wad, votes[msg.sender]);
