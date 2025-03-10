@@ -151,6 +151,8 @@ contract ChiefTest is Test {
         assertEq(chief.hat(), address(1));
         assertFalse(chief.canCall(address(1), address(0), bytes4(0)));
 
+        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW());
+
         vm.expectRevert("Chief/not-address-zero");
         chief.launch();
         yays[0] = address(0);
@@ -264,6 +266,7 @@ contract ChiefTest is Test {
         _enableSystem();
         vm.roll(block.number + 1);
         chief.free(1);
+        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW() - 1);
         _initialVote();
         vm.expectRevert("Chief/cant-free-same-block");
         chief.free(1);
@@ -325,6 +328,8 @@ contract ChiefTest is Test {
 
         _enableSystem();
 
+        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW());
+
         vm.expectEmit();
         emit Lift(c1);
         chief.lift(c1);
@@ -343,85 +348,6 @@ contract ChiefTest is Test {
 
         chief.lift(c1);
         assertFalse(chief.canCall(c1, address(0), bytes4(0)));
-    }
-
-    function testLiftHalfApprovals() public {
-        _enableSystem();
-        _initialVote();
-
-        // Upset the order.
-        vm.startPrank(uSmall);
-        gov.approve(address(chief), uSmallInitialBalance);
-        chief.lock(uSmallInitialBalance);
-
-        address[] memory uSmallYays = new address[](1);
-        uSmallYays[0] = c3;
-        chief.vote(uSmallYays);
-
-        vm.stopPrank();
-        vm.startPrank(uMedium);
-        vm.roll(block.number + 1);
-        chief.free(uMediumInitialBalance);
-        vm.stopPrank();
-
-        chief.lift(c3);
-
-        assertFalse(chief.canCall(c1, address(0), bytes4(0)));
-        assertFalse(chief.canCall(c2, address(0), bytes4(0)));
-        assertTrue(chief.canCall(c3, address(0), bytes4(0)));
-    }
-
-    function testVotingAndReorderingWithoutWeight() public {
-        assertEq(gov.balanceOf(uLarge), uLargeInitialBalance);
-
-        _initialVote();
-
-        // Vote without weight.
-        address[] memory uLargeYays = new address[](1);
-        uLargeYays[0] = c3;
-        vm.prank(uLarge);
-        chief.vote(uLargeYays);
-
-        // Attempt to update the elected set.
-        vm.expectRevert("Chief/not-higher-current-hat");
-        chief.lift(c3);
-    }
-
-    function testVotingBySlate() public {
-        assertEq(gov.balanceOf(uLarge), uLargeInitialBalance);
-
-        bytes32 slate = _initialVote();
-
-        // Upset the order.
-        vm.startPrank(uLarge);
-        gov.approve(address(chief), uLargeInitialBalance);
-        chief.lock(uLargeInitialBalance);
-
-        address[] memory uLargeYays = new address[](1);
-        uLargeYays[0] = c4;
-        chief.vote(uLargeYays);
-        vm.stopPrank();
-
-        // Update the elected set to reflect the new order.
-        chief.lift(c4);
-
-        // Now restore the old order using a slate.
-        vm.startPrank(uSmall);
-        gov.approve(address(chief), uSmallInitialBalance);
-        chief.lock(uSmallInitialBalance);
-        chief.vote(slate);
-        vm.stopPrank();
-
-        // Update the elected set to reflect the restored order.
-        chief.lift(c1);
-    }
-
-    function testVoteSlateEmptyAndNotEtched() public {
-        address[] memory emptyYays = new address[](0);
-        chief.vote(emptyYays);
-
-        vm.expectRevert("Chief/invalid-slate");
-        chief.vote(0x1010101010101010101010101010101010101010101010101010101010101010);
     }
 
     function testLiftCooldown() public {
@@ -454,5 +380,93 @@ contract ChiefTest is Test {
         vm.roll(block.number + 1);
         chief.lift(c2);
         assertEq(chief.hat(), c2);
+    }
+
+    function testLiftHalfApprovals() public {
+        _enableSystem();
+        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW());
+        _initialVote();
+
+        // Upset the order.
+        vm.startPrank(uSmall);
+        gov.approve(address(chief), uSmallInitialBalance);
+        chief.lock(uSmallInitialBalance);
+
+        address[] memory uSmallYays = new address[](1);
+        uSmallYays[0] = c3;
+        chief.vote(uSmallYays);
+
+        vm.stopPrank();
+        vm.startPrank(uMedium);
+        vm.roll(block.number + 1);
+        chief.free(uMediumInitialBalance);
+        vm.stopPrank();
+
+        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW() -  1);
+
+        chief.lift(c3);
+
+        assertFalse(chief.canCall(c1, address(0), bytes4(0)));
+        assertFalse(chief.canCall(c2, address(0), bytes4(0)));
+        assertTrue(chief.canCall(c3, address(0), bytes4(0)));
+    }
+
+    function testVotingAndReorderingWithoutWeight() public {
+        assertEq(gov.balanceOf(uLarge), uLargeInitialBalance);
+
+        _initialVote();
+
+        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW());
+
+        // Vote without weight.
+        address[] memory uLargeYays = new address[](1);
+        uLargeYays[0] = c3;
+        vm.prank(uLarge);
+        chief.vote(uLargeYays);
+
+        // Attempt to update the elected set.
+        vm.expectRevert("Chief/not-higher-current-hat");
+        chief.lift(c3);
+    }
+
+    function testVotingBySlate() public {
+        assertEq(gov.balanceOf(uLarge), uLargeInitialBalance);
+
+        bytes32 slate = _initialVote();
+
+        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW());
+
+        // Upset the order.
+        vm.startPrank(uLarge);
+        gov.approve(address(chief), uLargeInitialBalance);
+        chief.lock(uLargeInitialBalance);
+
+        address[] memory uLargeYays = new address[](1);
+        uLargeYays[0] = c4;
+        chief.vote(uLargeYays);
+        vm.stopPrank();
+
+        // Update the elected set to reflect the new order.
+        chief.lift(c4);
+
+        // Now restore the old order using a slate.
+        vm.startPrank(uSmall);
+        gov.approve(address(chief), uSmallInitialBalance);
+        chief.lock(uSmallInitialBalance);
+        chief.vote(slate);
+        vm.stopPrank();
+
+        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW());
+
+        // Update the elected set to reflect the restored order.
+        chief.lift(c1);
+    }
+
+    function testVoteSlateEmptyAndNotEtched() public {
+        address[] memory emptyYays = new address[](0);
+        chief.vote(emptyYays);
+
+        vm.expectRevert("Chief/invalid-slate");
+        chief.vote(0x1010101010101010101010101010101010101010101010101010101010101010);
     }
 }
