@@ -69,7 +69,6 @@ contract ChiefTest is Test {
         gov.transfer(uLarge, uLargeInitialBalance);
         gov.transfer(uMedium, uMediumInitialBalance);
         gov.transfer(uSmall, uSmallInitialBalance);
-        vm.roll(1_000); // Block number = 1000
     }
 
     function _enableSystem() internal {
@@ -85,7 +84,6 @@ contract ChiefTest is Test {
         emit Vote(slate);
         chief.vote(yays);
 
-        vm.roll(block.number + 1);
         vm.expectEmit();
         emit Launch();
         chief.launch();
@@ -104,7 +102,6 @@ contract ChiefTest is Test {
         vm.stopPrank();
 
         // Lift the new hat
-        vm.roll(block.number + 1);
         chief.lift(c1);
     }
 
@@ -149,7 +146,6 @@ contract ChiefTest is Test {
         gov.approve(address(chief), 80_000 ether);
         chief.lock(80_000 ether);
         chief.vote(yays);
-        vm.roll(block.number + 1);
         chief.lift(address(1));
         assertEq(chief.hat(), address(1));
         assertFalse(chief.canCall(address(1), address(0), bytes4(0)));
@@ -158,7 +154,6 @@ contract ChiefTest is Test {
         chief.launch();
         yays[0] = address(0);
         chief.vote(yays);
-        vm.roll(block.number + 1);
         chief.lift(address(0));
         assertEq(chief.hat(), address(0));
         assertEq(chief.live(), 0);
@@ -178,7 +173,6 @@ contract ChiefTest is Test {
         vm.expectRevert("Chief/less-than-threshold");
         chief.launch();
         chief.lock(1);
-        vm.roll(block.number + 1);
         assertEq(chief.hat(), address(0));
         assertEq(chief.live(), 0);
         assertFalse(chief.canCall(address(0), address(0), bytes4(0)));
@@ -323,7 +317,6 @@ contract ChiefTest is Test {
 
         _enableSystem();
 
-        vm.roll(block.number + 1);
         vm.expectEmit();
         emit Lift(c1);
         chief.lift(c1);
@@ -340,7 +333,6 @@ contract ChiefTest is Test {
         chief.vote(uLargeYays);
         vm.stopPrank();
 
-        vm.roll(block.number + 1);
         chief.lift(c1);
         assertFalse(chief.canCall(c1, address(0), bytes4(0)));
     }
@@ -363,7 +355,6 @@ contract ChiefTest is Test {
         chief.free(uMediumInitialBalance);
         vm.stopPrank();
 
-        vm.roll(block.number + 1);
         chief.lift(c3);
 
         assertFalse(chief.canCall(c1, address(0), bytes4(0)));
@@ -403,7 +394,6 @@ contract ChiefTest is Test {
         vm.stopPrank();
 
         // Update the elected set to reflect the new order.
-        vm.roll(block.number + 1);
         chief.lift(c4);
 
         // Now restore the old order using a slate.
@@ -414,7 +404,6 @@ contract ChiefTest is Test {
         vm.stopPrank();
 
         // Update the elected set to reflect the restored order.
-        vm.roll(block.number + 1);
         chief.lift(c1);
     }
 
