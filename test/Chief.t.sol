@@ -151,7 +151,7 @@ contract ChiefTest is Test {
         assertEq(chief.hat(), address(1));
         assertFalse(chief.canCall(address(1), address(0), bytes4(0)));
 
-        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW());
+        vm.roll(block.number + chief.LIFT_COOLDOWN() + 1);
 
         vm.expectRevert("Chief/not-address-zero");
         chief.launch();
@@ -266,7 +266,7 @@ contract ChiefTest is Test {
         _enableSystem();
         vm.roll(block.number + 1);
         chief.free(1);
-        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW() - 1);
+        vm.roll(block.number + chief.LIFT_COOLDOWN());
         _initialVote();
         vm.expectRevert("Chief/cant-free-same-block");
         chief.free(1);
@@ -328,7 +328,7 @@ contract ChiefTest is Test {
 
         _enableSystem();
 
-        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW());
+        vm.roll(block.number + chief.LIFT_COOLDOWN() + 1);
 
         vm.expectEmit();
         emit Lift(c1);
@@ -360,9 +360,10 @@ contract ChiefTest is Test {
         yays[0] = c1;
         chief.vote(yays);
 
-        vm.expectRevert("Chief/cant-lift-again-yet"); // Limited by prev launch
+        vm.roll(block.number + 1);
+        vm.expectRevert("Chief/cant-lift-again-yet"); // Limited by prev block launch
         chief.lift(c1);
-        vm.roll(block.number + 9);
+        vm.roll(block.number + chief.LIFT_COOLDOWN() - 1);
         vm.expectRevert("Chief/cant-lift-again-yet");
         chief.lift(c1);
         vm.roll(block.number + 1);
@@ -372,9 +373,10 @@ contract ChiefTest is Test {
         chief.vote(yays);
 
         assertEq(chief.hat(), c1);
-        vm.expectRevert("Chief/cant-lift-again-yet"); // Limited by prev lift
+        vm.roll(block.number + 1);
+        vm.expectRevert("Chief/cant-lift-again-yet"); // Limited by prev block lift
         chief.lift(c2);
-        vm.roll(block.number + 9);
+        vm.roll(block.number + chief.LIFT_COOLDOWN() - 1);
         vm.expectRevert("Chief/cant-lift-again-yet");
         chief.lift(c2);
         vm.roll(block.number + 1);
@@ -382,9 +384,25 @@ contract ChiefTest is Test {
         assertEq(chief.hat(), c2);
     }
 
+    function testLiftCooldownSameBlock() public {
+        _enableSystem();
+
+        gov.approve(address(chief), 100_000 ether);
+        chief.lock(100_000 ether);
+
+        address[] memory yays = new address[](1);
+        yays[0] = c1;
+        chief.vote(yays);
+
+        chief.lift(c1); // can lift in the same block than launch
+        yays[0] = c2;
+        chief.vote(yays);
+        chief.lift(c2); // can lift in the same block than prev lift
+    }
+
     function testLiftHalfApprovals() public {
         _enableSystem();
-        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW());
+        vm.roll(block.number + chief.LIFT_COOLDOWN() + 1);
         _initialVote();
 
         // Upset the order.
@@ -402,7 +420,7 @@ contract ChiefTest is Test {
         chief.free(uMediumInitialBalance);
         vm.stopPrank();
 
-        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW() -  1);
+        vm.roll(block.number + chief.LIFT_COOLDOWN());
 
         chief.lift(c3);
 
@@ -416,7 +434,7 @@ contract ChiefTest is Test {
 
         _initialVote();
 
-        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW());
+        vm.roll(block.number + chief.LIFT_COOLDOWN() + 1);
 
         // Vote without weight.
         address[] memory uLargeYays = new address[](1);
@@ -434,7 +452,7 @@ contract ChiefTest is Test {
 
         bytes32 slate = _initialVote();
 
-        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW());
+        vm.roll(block.number + chief.LIFT_COOLDOWN() + 1);
 
         // Upset the order.
         vm.startPrank(uLarge);
@@ -456,7 +474,7 @@ contract ChiefTest is Test {
         chief.vote(slate);
         vm.stopPrank();
 
-        vm.roll(block.number + chief.LAST_LIFT_COOLDOWN_WINDOW());
+        vm.roll(block.number + chief.LIFT_COOLDOWN() + 1);
 
         // Update the elected set to reflect the restored order.
         chief.lift(c1);
