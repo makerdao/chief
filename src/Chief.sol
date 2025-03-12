@@ -115,7 +115,7 @@ contract Chief is DSAuthority {
         if (yays.length > 1) {
             for (uint256 i = 0; i < yays.length - 1;) {
                 // strict inequality ensures both ordering and uniqueness
-                require(uint160(yays[i]) < uint160(yays[i+1]), "Chief/yays-not-ordered");
+                require(yays[i] < yays[i+1], "Chief/yays-not-ordered");
                 unchecked { ++i; } // bounded by max array length
             }
         }
