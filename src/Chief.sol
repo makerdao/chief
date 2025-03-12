@@ -62,7 +62,7 @@ contract Chief is DSAuthority {
     }
 
     function _addWeight(uint256 weight, bytes32 slate) internal {
-        address[] storage yays = slates[slate];
+        address[] memory yays = slates[slate];
         for (uint256 i = 0; i < yays.length;) {
             approvals[yays[i]] = approvals[yays[i]] + weight;
             unchecked { ++i; } // bounded by max array length
@@ -70,7 +70,7 @@ contract Chief is DSAuthority {
     }
 
     function _subWeight(uint256 weight, bytes32 slate) internal {
-        address[] storage yays = slates[slate];
+        address[] memory yays = slates[slate];
         for (uint256 i = 0; i < yays.length;) {
             approvals[yays[i]] = approvals[yays[i]] - weight;
             unchecked { ++i; } // bounded by max array length
