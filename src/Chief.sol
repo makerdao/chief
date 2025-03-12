@@ -21,9 +21,7 @@
 pragma solidity ^0.8.26;
 
 interface DSAuthority {
-    function canCall(
-        address src, address dst, bytes4 sig
-    ) external view returns (bool);
+    function canCall(address src, address dst, bytes4 sig) external view returns (bool);
 }
 
 interface GemLike {
@@ -59,17 +57,17 @@ contract Chief is DSAuthority {
     }
 
     function _addWeight(uint256 weight, bytes32 slate) internal {
-        address[] storage yays = slates[slate];
+        address[] memory yays = slates[slate];
         for (uint256 i = 0; i < yays.length;) {
-            approvals[yays[i]] = approvals[yays[i]] + weight;
+            approvals[yays[i]] += weight;
             unchecked { ++i; } // bounded by max array length
         }
     }
 
     function _subWeight(uint256 weight, bytes32 slate) internal {
-        address[] storage yays = slates[slate];
+        address[] memory yays = slates[slate];
         for (uint256 i = 0; i < yays.length;) {
-            approvals[yays[i]] = approvals[yays[i]] - weight;
+            approvals[yays[i]] -= weight;
             unchecked { ++i; } // bounded by max array length
         }
     }
@@ -93,7 +91,7 @@ contract Chief is DSAuthority {
     function lock(uint256 wad) external {
         assembly { tstore(caller(), 1) }
         gov.transferFrom(msg.sender, address(this), wad);
-        deposits[msg.sender] = deposits[msg.sender] + wad;
+        deposits[msg.sender] += wad;
         _addWeight(wad, votes[msg.sender]);
         emit Lock(wad);
     }
@@ -101,7 +99,7 @@ contract Chief is DSAuthority {
     function free(uint256 wad) external {
         bool prevLock; assembly { prevLock := tload(caller()) }
         require(!prevLock, "Chief/prev-lock-in-same-tx");
-        deposits[msg.sender] = deposits[msg.sender] - wad;
+        deposits[msg.sender] -= wad;
         _subWeight(wad, votes[msg.sender]);
         gov.transfer(msg.sender, wad);
         emit Free(wad);
@@ -112,7 +110,7 @@ contract Chief is DSAuthority {
         if (yays.length > 1) {
             for (uint256 i = 0; i < yays.length - 1;) {
                 // strict inequality ensures both ordering and uniqueness
-                require(uint160(yays[i]) < uint160(yays[i+1]), "Chief/yays-not-ordered");
+                require(yays[i] < yays[i+1], "Chief/yays-not-ordered");
                 unchecked { ++i; } // bounded by max array length
             }
         }

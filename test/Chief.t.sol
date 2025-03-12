@@ -446,4 +446,14 @@ contract ChiefTest is Test {
         vm.expectRevert("Chief/invalid-slate");
         chief.vote(0x1010101010101010101010101010101010101010101010101010101010101010);
     }
+
+    function testOverflow() public {
+        deal(address(gov), address(this), type(uint256).max);
+        gov.approve(address(chief), type(uint256).max);
+        chief.lock(type(uint256).max);
+        deal(address(gov), address(this), type(uint256).max);
+        gov.approve(address(chief), type(uint256).max);
+        vm.expectRevert(stdError.arithmeticError);
+        chief.lock(1);
+    }
 }
