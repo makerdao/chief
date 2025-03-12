@@ -21,9 +21,7 @@
 pragma solidity ^0.8.21;
 
 interface DSAuthority {
-    function canCall(
-        address src, address dst, bytes4 sig
-    ) external view returns (bool);
+    function canCall(address src, address dst, bytes4 sig) external view returns (bool);
 }
 
 interface GemLike {
