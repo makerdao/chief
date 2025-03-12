@@ -64,7 +64,7 @@ contract Chief is DSAuthority {
     function _addWeight(uint256 weight, bytes32 slate) internal {
         address[] memory yays = slates[slate];
         for (uint256 i = 0; i < yays.length;) {
-            approvals[yays[i]] = approvals[yays[i]] + weight;
+            approvals[yays[i]] += weight;
             unchecked { ++i; } // bounded by max array length
         }
     }
@@ -72,7 +72,7 @@ contract Chief is DSAuthority {
     function _subWeight(uint256 weight, bytes32 slate) internal {
         address[] memory yays = slates[slate];
         for (uint256 i = 0; i < yays.length;) {
-            approvals[yays[i]] = approvals[yays[i]] - weight;
+            approvals[yays[i]] -= weight;
             unchecked { ++i; } // bounded by max array length
         }
     }
@@ -98,13 +98,13 @@ contract Chief is DSAuthority {
         require(block.number == holdTrigger || block.number > holdTrigger + HOLD_SIZE, "Chief/no-lock-during-hold");
         last = block.number;
         gov.transferFrom(msg.sender, address(this), wad);
-        deposits[msg.sender] = deposits[msg.sender] + wad;
+        deposits[msg.sender] += wad;
         _addWeight(wad, votes[msg.sender]);
         emit Lock(wad);
     }
 
     function free(uint256 wad) external {
-        deposits[msg.sender] = deposits[msg.sender] - wad;
+        deposits[msg.sender] -= wad;
         _subWeight(wad, votes[msg.sender]);
         gov.transfer(msg.sender, wad);
         emit Free(wad);

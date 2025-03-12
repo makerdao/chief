@@ -550,4 +550,14 @@ contract ChiefTest is Test {
         vm.expectRevert("Chief/cooldown-not-finished"); // can not hold
         chief.hold(c1);
     }
+
+    function testOverflow() public {
+        deal(address(gov), address(this), type(uint256).max);
+        gov.approve(address(chief), type(uint256).max);
+        chief.lock(type(uint256).max);
+        deal(address(gov), address(this), type(uint256).max);
+        gov.approve(address(chief), type(uint256).max);
+        vm.expectRevert(stdError.arithmeticError);
+        chief.lock(1);
+    }
 }
