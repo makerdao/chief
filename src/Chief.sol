@@ -113,13 +113,13 @@ contract Chief is DSAuthority {
     function etch(address[] calldata yays) public returns (bytes32 slate) {
         require(yays.length <= maxYays, "Chief/greater-max-yays");
         if (yays.length > 1) {
-            for (uint256 i = 0; i < yays.length - 1;) {
-                // strict inequality ensures both ordering and uniqueness
-                require(yays[i] < yays[i+1], "Chief/yays-not-ordered");
-                unchecked { ++i; } // bounded by max array length
+            unchecked { // bounded by min and max array length
+                for (uint256 i = 0; i < yays.length - 1;) {
+                    // strict inequality ensures both ordering and uniqueness
+                    require(yays[++i] > yays[i], "Chief/yays-not-ordered");
+                }
             }
         }
-
         slate = keccak256(abi.encodePacked(yays));
         slates[slate] = yays;
         emit Etch(slate, yays);
