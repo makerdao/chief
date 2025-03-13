@@ -124,7 +124,7 @@ contract ChiefTest is Test {
         chief.lift(c1);
     }
 
-    function testCompatibilityGetters() public {
+    function testCompatibilityGetters() public view {
         assertEq(address(chief.GOV()), address(chief.gov()));
         assertEq(chief.MAX_YAYS(), chief.maxYays());
     }
