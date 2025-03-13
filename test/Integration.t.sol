@@ -57,7 +57,6 @@ contract ChiefTest is DssTest {
         address[] memory yays = new address[](1);
         yays[0] = address(0);
         chief.vote(yays);
-        vm.roll(block.number + 1);
         chief.launch();
         yays[0] = spell;
         chief.vote(yays);
