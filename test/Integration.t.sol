@@ -62,7 +62,7 @@ contract ChiefTest is DssTest {
         chief.vote(yays);
     }
 
-    function testIntegrationPausePlot() public {
+    function testPausePlot() public {
         uint256 eta = block.timestamp + pause.delay();
         assertFalse(pause.plans(keccak256(abi.encode(address(123), bytes32(uint256(456)), "", eta))));
         vm.expectRevert("ds-auth-unauthorized");
@@ -72,7 +72,7 @@ contract ChiefTest is DssTest {
         assertTrue(pause.plans(keccak256(abi.encode(address(123), bytes32(uint256(456)), "", eta))));
     }
 
-    function testIntegrationMomAction() public {
+    function testMomAction() public {
         ClipAbstract clip = ClipAbstract(dss.chainlog.getAddress("MCD_CLIP_ETH_A"));
         assertEq(clip.stopped(), 0);
         vm.expectRevert("ClipperMom/not-authorized");
