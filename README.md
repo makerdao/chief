@@ -108,4 +108,4 @@ slate.
 ### `lift(address whom)`
 
 Checks the given address and promotes it as the `hat` of the `chief` if it has more weight than the current `hat`.
-Requires that there hasn't been a `launch` or another `lift` call done during the previous X blocks (defined in a constant).
+Requires that there hasn't been a `launch` or another `lift` call done during the previous X blocks (defined in an immutable).
