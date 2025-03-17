@@ -45,7 +45,7 @@ contract ChiefTest is DssTest {
         sky = dss.chainlog.getAddress("SKY");
         pause = DSPauseAbstract(dss.chainlog.getAddress("MCD_PAUSE"));
         mom = ClipperMomAbstract(dss.chainlog.getAddress("CLIPPER_MOM"));
-        chief = new Chief(sky, 5, 2 * 10**9 * 10**18);
+        chief = new Chief(sky, 5, 2 * 10**9 * 10**18, 10);
 
         address pauseProxy = dss.chainlog.getAddress("MCD_PAUSE_PROXY");
         vm.prank(pauseProxy); pause.setAuthority(address(chief));

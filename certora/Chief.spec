@@ -15,7 +15,7 @@ methods {
     function maxYays() external returns (uint256) envfree;
     function launchThreshold() external returns (uint256) envfree;
     function EMPTY_SLATE() external returns (bytes32) envfree;
-    function LIFT_COOLDOWN() external returns (uint256) envfree;
+    function liftCooldown() external returns (uint256) envfree;
     function length(bytes32) external returns (uint256) envfree;
     function GOV() external returns (address) envfree;
     function MAX_YAYS() external returns (uint256) envfree;
@@ -1019,12 +1019,12 @@ rule lift_revert(address whom) {
     mathint approvalsWhom = approvals(whom);
     mathint approvalsHat = approvals(hat);
     mathint last = last();
-    mathint LIFT_COOLDOWN = LIFT_COOLDOWN();
+    mathint liftCooldown = liftCooldown();
 
     lift@withrevert(e, whom);
 
     bool revert1 = e.msg.value > 0;
-    bool revert2 = e.block.number != last && e.block.number <= last + LIFT_COOLDOWN;
+    bool revert2 = e.block.number != last && e.block.number <= last + liftCooldown;
     bool revert3 = approvalsWhom <= approvalsHat;
 
     assert lastReverted <=> revert1 || revert2 || revert3, "Revert rules failed";

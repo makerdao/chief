@@ -57,7 +57,7 @@ contract ChiefTest is Test {
         gov = new TokenMock();
         deal(address(gov), address(this), initialBalance);
 
-        chief = new Chief(address(gov), electionSize, 80_000 ether);
+        chief = new Chief(address(gov), electionSize, 80_000 ether, 10);
 
         uLarge = address(123);
         uMedium = address(456);
@@ -151,7 +151,7 @@ contract ChiefTest is Test {
         assertEq(chief.hat(), address(1));
         assertFalse(chief.canCall(address(1), address(0), bytes4(0)));
 
-        vm.roll(block.number + chief.LIFT_COOLDOWN() + 1);
+        vm.roll(block.number + chief.liftCooldown() + 1);
 
         vm.expectRevert("Chief/not-address-zero");
         chief.launch();
@@ -266,7 +266,7 @@ contract ChiefTest is Test {
         _enableSystem();
         vm.roll(block.number + 1);
         chief.free(1);
-        vm.roll(block.number + chief.LIFT_COOLDOWN());
+        vm.roll(block.number + chief.liftCooldown());
         _initialVote();
         vm.expectRevert("Chief/cant-free-same-block");
         chief.free(1);
@@ -328,7 +328,7 @@ contract ChiefTest is Test {
 
         _enableSystem();
 
-        vm.roll(block.number + chief.LIFT_COOLDOWN() + 1);
+        vm.roll(block.number + chief.liftCooldown() + 1);
 
         vm.expectEmit();
         emit Lift(c1);
@@ -363,7 +363,7 @@ contract ChiefTest is Test {
         vm.roll(block.number + 1);
         vm.expectRevert("Chief/cant-lift-again-yet"); // Limited by prev block launch
         chief.lift(c1);
-        vm.roll(block.number + chief.LIFT_COOLDOWN() - 1);
+        vm.roll(block.number + chief.liftCooldown() - 1);
         vm.expectRevert("Chief/cant-lift-again-yet");
         chief.lift(c1);
         vm.roll(block.number + 1);
@@ -376,7 +376,7 @@ contract ChiefTest is Test {
         vm.roll(block.number + 1);
         vm.expectRevert("Chief/cant-lift-again-yet"); // Limited by prev block lift
         chief.lift(c2);
-        vm.roll(block.number + chief.LIFT_COOLDOWN() - 1);
+        vm.roll(block.number + chief.liftCooldown() - 1);
         vm.expectRevert("Chief/cant-lift-again-yet");
         chief.lift(c2);
         vm.roll(block.number + 1);
@@ -402,7 +402,7 @@ contract ChiefTest is Test {
 
     function testLiftHalfApprovals() public {
         _enableSystem();
-        vm.roll(block.number + chief.LIFT_COOLDOWN() + 1);
+        vm.roll(block.number + chief.liftCooldown() + 1);
         _initialVote();
 
         // Upset the order.
@@ -420,7 +420,7 @@ contract ChiefTest is Test {
         chief.free(uMediumInitialBalance);
         vm.stopPrank();
 
-        vm.roll(block.number + chief.LIFT_COOLDOWN());
+        vm.roll(block.number + chief.liftCooldown());
 
         chief.lift(c3);
 
@@ -434,7 +434,7 @@ contract ChiefTest is Test {
 
         _initialVote();
 
-        vm.roll(block.number + chief.LIFT_COOLDOWN() + 1);
+        vm.roll(block.number + chief.liftCooldown() + 1);
 
         // Vote without weight.
         address[] memory uLargeYays = new address[](1);
@@ -452,7 +452,7 @@ contract ChiefTest is Test {
 
         bytes32 slate = _initialVote();
 
-        vm.roll(block.number + chief.LIFT_COOLDOWN() + 1);
+        vm.roll(block.number + chief.liftCooldown() + 1);
 
         // Upset the order.
         vm.startPrank(uLarge);
@@ -474,7 +474,7 @@ contract ChiefTest is Test {
         chief.vote(slate);
         vm.stopPrank();
 
-        vm.roll(block.number + chief.LIFT_COOLDOWN() + 1);
+        vm.roll(block.number + chief.liftCooldown() + 1);
 
         // Update the elected set to reflect the restored order.
         chief.lift(c1);

@@ -41,9 +41,9 @@ contract Chief is DSAuthority {
     GemLike public immutable gov;
     uint256 public immutable maxYays;
     uint256 public immutable launchThreshold;
+    uint256 public immutable liftCooldown;
 
     bytes32 public constant EMPTY_SLATE   = keccak256(abi.encodePacked(new address[](0)));
-    uint256 public constant LIFT_COOLDOWN = 10;
 
     event Launch();
     event Lock(uint256 wad);
@@ -52,10 +52,11 @@ contract Chief is DSAuthority {
     event Vote(bytes32 indexed slate);
     event Lift(address indexed whom);
 
-    constructor(address gov_, uint256 maxYays_, uint256 launchThreshold_) {
+    constructor(address gov_, uint256 maxYays_, uint256 launchThreshold_, uint256 liftCooldown_) {
         gov = GemLike(gov_);
         maxYays = maxYays_;
         launchThreshold = launchThreshold_;
+        liftCooldown = liftCooldown_;
     }
 
     function _addWeight(uint256 weight, bytes32 slate) internal {
@@ -137,7 +138,7 @@ contract Chief is DSAuthority {
     }
 
     function lift(address whom) external {
-        require(block.number == last || block.number > last + LIFT_COOLDOWN, "Chief/cant-lift-again-yet");
+        require(block.number == last || block.number > last + liftCooldown, "Chief/cant-lift-again-yet");
         require(approvals[whom] > approvals[hat], "Chief/not-higher-current-hat");
         hat = whom;
         last = block.number;
