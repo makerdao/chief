@@ -52,6 +52,7 @@ candidate on their slate multiple times.
 - `gov`: `Token` used for voting.
 - `maxYays`: Maximum number of candidates a slate can hold.
 - `launchThreshold`: Initial amount to lock in `address(0)` for activating the `chief`.
+- `liftCooldown`: Minimum number of blocks between blocks containing a `lift`.
 
 The following events are triggered:
 
