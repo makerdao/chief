@@ -1,12 +1,6 @@
-[submodule "lib/ds-test"]
-	path = lib/ds-test
-	url = https://github.com/dapphub/ds-test
-[submodule "lib/ds-token"]
-	path = lib/ds-token
-	url = https://github.com/dapphub/ds-token
-[submodule "lib/ds-roles"]
-	path = lib/ds-roles
-	url = https://github.com/dapphub/ds-roles
-[submodule "lib/ds-thing"]
-	path = lib/ds-thing
-	url = https://github.com/dapphub/ds-thing
+[submodule "lib/forge-std"]
+	path = lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "lib/dss-test"]
+	path = lib/dss-test
+	url = https://github.com/makerdao/dss-test
