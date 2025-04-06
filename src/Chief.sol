@@ -46,10 +46,10 @@ contract Chief is DSAuthority {
     bytes32 public constant EMPTY_SLATE   = keccak256(abi.encodePacked(new address[](0)));
 
     event Launch();
-    event Lock(uint256 wad);
-    event Free(uint256 wad);
+    event Lock(address indexed usr, uint256 wad);
+    event Free(address indexed usr, uint256 wad);
     event Etch(bytes32 indexed slate, address[] yays);
-    event Vote(bytes32 indexed slate);
+    event Vote(address indexed usr, bytes32 indexed slate);
     event Lift(address indexed whom);
 
     constructor(address gov_, uint256 maxYays_, uint256 launchThreshold_, uint256 liftCooldown_) {
@@ -96,7 +96,7 @@ contract Chief is DSAuthority {
         gov.transferFrom(msg.sender, address(this), wad);
         deposits[msg.sender] += wad;
         _addWeight(wad, votes[msg.sender]);
-        emit Lock(wad);
+        emit Lock(msg.sender, wad);
     }
 
     function free(uint256 wad) external {
@@ -104,7 +104,7 @@ contract Chief is DSAuthority {
         deposits[msg.sender] -= wad;
         _subWeight(wad, votes[msg.sender]);
         gov.transfer(msg.sender, wad);
-        emit Free(wad);
+        emit Free(msg.sender, wad);
     }
 
     function etch(address[] calldata yays) public returns (bytes32 slate) {
@@ -134,7 +134,7 @@ contract Chief is DSAuthority {
         _subWeight(weight, votes[msg.sender]);
         votes[msg.sender] = slate;
         _addWeight(weight, slate);
-        emit Vote(slate);
+        emit Vote(msg.sender, slate);
     }
 
     function lift(address whom) external {

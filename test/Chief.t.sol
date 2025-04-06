@@ -47,10 +47,10 @@ contract ChiefTest is Test {
     address uSmall;
 
     event Launch();
-    event Lock(uint256 wad);
-    event Free(uint256 wad);
+    event Lock(address indexed usr, uint256 wad);
+    event Free(address indexed usr, uint256 wad);
     event Etch(bytes32 indexed slate, address[] yays);
-    event Vote(bytes32 indexed slate);
+    event Vote(address indexed usr, bytes32 indexed slate);
     event Lift(address indexed whom);
 
     function setUp() public {
@@ -77,12 +77,12 @@ contract ChiefTest is Test {
         yays[0] = address(0);
         gov.approve(address(chief), 80_000 ether);
         vm.expectEmit();
-        emit Lock(80_000 ether);
+        emit Lock(address(this), 80_000 ether);
         chief.lock(80_000 ether);
         bytes32 slate = keccak256(abi.encodePacked(yays));
         emit Etch(slate, yays);
         vm.expectEmit();
-        emit Vote(slate);
+        emit Vote(address(this), slate);
         chief.vote(yays);
 
         vm.expectEmit();
@@ -93,6 +93,8 @@ contract ChiefTest is Test {
     function _initialVote() internal returns (bytes32 slate) {
         vm.startPrank(uMedium);
         gov.approve(address(chief), uMediumInitialBalance);
+        vm.expectEmit();
+        emit Lock(uMedium, uMediumInitialBalance);
         chief.lock(uMediumInitialBalance);
 
         address[] memory uMediumYays = new address[](3);
@@ -282,13 +284,15 @@ contract ChiefTest is Test {
 
         address[] memory uLargeYays = new address[](1);
         uLargeYays[0] = c1;
+        vm.expectEmit();
+        emit Vote(uLarge, keccak256(abi.encodePacked(uLargeYays)));
         chief.vote(uLargeYays);
 
         assertEq(chief.approvals(c1), uLargeLockedAmt);
 
         // Changing weight should update the weight of our candidate.
         vm.expectEmit();
-        emit Free(uLargeLockedAmt);
+        emit Free(uLarge, uLargeLockedAmt);
         chief.free(uLargeLockedAmt);
         assertEq(chief.approvals(c1), 0);
 
